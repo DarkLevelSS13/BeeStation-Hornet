@@ -34,7 +34,7 @@
 	icon = 'icons/obj/machines/sleeper.dmi'
 	icon_state = "sleeper"
 	energy_drain = 20
-	range = MELEE
+	range = MECHA_MELEE
 	equip_cooldown = 20
 	var/mob/living/carbon/patient = null
 	var/inject_amount = 10
@@ -168,7 +168,7 @@
 				<font color="[patient.getToxLoss() < 60 ? "#3d5bc3" : "#c51e1e"]"><b>Toxin Content:</b> [patient.getToxLoss()]%</font><br />
 				<font color="[patient.getFireLoss() < 60 ? "#3d5bc3" : "#c51e1e"]"><b>Burn Severity:</b> [patient.getFireLoss()]%</font><br />
 				<span class='danger'>[patient.getCloneLoss() ? "Subject appears to have cellular damage." : ""]</span><br />
-				<span class='danger'>[patient.getBrainLoss() ? "Significant brain damage detected." : ""]</span><br />
+				<span class='danger'>[patient.getOrganLoss(ORGAN_SLOT_BRAIN) ? "Significant brain damage detected." : ""]</span><br />
 				<span class='danger'>[length(patient.get_traumas()) ? "Brain Traumas detected." : ""]</span><br />
 				"}
 
@@ -193,11 +193,11 @@
 	if(!R || !patient || !SG || !(SG in chassis.equipment))
 		return 0
 	var/to_inject = min(R.volume, inject_amount)
-	if(to_inject && patient.reagents.get_reagent_amount(R.id) + to_inject <= inject_amount*2)
+	if(to_inject && patient.reagents.get_reagent_amount(R.type) + to_inject <= inject_amount*2)
 		occupant_message("Injecting [patient] with [to_inject] units of [R.name].")
 		log_message("Injecting [patient] with [to_inject] units of [R.name].", LOG_MECHA)
 		log_combat(chassis.occupant, patient, "injected", "[name] ([R] - [to_inject] units)")
-		SG.reagents.trans_id_to(patient,R.id,to_inject)
+		SG.reagents.trans_id_to(patient,R.type,to_inject)
 		update_equip_info()
 	return
 
@@ -232,8 +232,8 @@
 	M.AdjustParalyzed(-80)
 	M.AdjustImmobilized(-80)
 	M.AdjustUnconscious(-80)
-	if(M.reagents.get_reagent_amount("epinephrine") < 5)
-		M.reagents.add_reagent("epinephrine", 5)
+	if(M.reagents.get_reagent_amount(/datum/reagent/medicine/epinephrine) < 5)
+		M.reagents.add_reagent(/datum/reagent/medicine/epinephrine, 5)
 	chassis.use_power(energy_drain)
 	update_equip_info()
 
@@ -256,14 +256,14 @@
 	var/synth_speed = 5 //[num] reagent units per cycle
 	energy_drain = 10
 	var/mode = 0 //0 - fire syringe, 1 - analyze reagents.
-	range = MELEE|RANGED
+	range = MECHA_MELEE|MECHA_RANGED
 	equip_cooldown = 10
 
 /obj/item/mecha_parts/mecha_equipment/medical/syringe_gun/Initialize()
 	. = ..()
 	create_reagents(max_volume, NO_REACT)
 	syringes = new
-	known_reagents = list("epinephrine"="Epinephrine","charcoal"="Charcoal")
+	known_reagents = list(/datum/reagent/medicine/epinephrine="Epinephrine",/datum/reagent/medicine/charcoal="Charcoal")
 	processed_reagents = new
 
 /obj/item/mecha_parts/mecha_equipment/medical/syringe_gun/detach()
@@ -329,8 +329,7 @@
 					if(M.can_inject(null, 1))
 						if(mechsyringe.reagents)
 							for(var/datum/reagent/A in mechsyringe.reagents.reagent_list)
-								R += A.id + " ("
-								R += num2text(A.volume) + "),"
+								R += "[A.name] ([num2text(A.volume)]"
 						mechsyringe.icon_state = initial(mechsyringe.icon_state)
 						mechsyringe.icon = initial(mechsyringe.icon)
 						mechsyringe.reagents.reaction(M, INJECT)
@@ -365,7 +364,7 @@
 		for(var/i=1 to known_reagents.len)
 			if(m>=synth_speed)
 				break
-			var/reagent = href_list["reagent_[i]"]
+			var/reagent = text2path(href_list["reagent_[i]"])
 			if(reagent && (reagent in known_reagents))
 				message = "[m ? ", " : null][known_reagents[reagent]]"
 				processed_reagents += reagent
@@ -443,7 +442,7 @@
 	var/output
 	for(var/datum/reagent/R in reagents.reagent_list)
 		if(R.volume > 0)
-			output += "[R]: [round(R.volume,0.001)] - <a href=\"?src=[REF(src)];purge_reagent=[R.id]\">Purge Reagent</a><br />"
+			output += "[R]: [round(R.volume,0.001)] - <a href=\"?src=[REF(src)];purge_reagent=[R]\">Purge Reagent</a><br />"
 	if(output)
 		output += "Total: [round(reagents.total_volume,0.001)]/[reagents.maximum_volume] - <a href=\"?src=[REF(src)];purge_all=1\">Purge All</a>"
 	return output || "None"
@@ -479,7 +478,7 @@
 		return 0
 	occupant_message("Analyzing reagents...")
 	for(var/datum/reagent/R in A.reagents.reagent_list)
-		if(R.can_synth && add_known_reagent(R.id,R.name))
+		if(R.can_synth && add_known_reagent(R.type,R.name))
 			occupant_message("Reagent analyzed, identified as [R.name] and added to database.")
 			send_byjax(chassis.occupant,"msyringegun.browser","reagents_form",get_reagents_form())
 	occupant_message("Analyzis complete.")
@@ -525,10 +524,10 @@
 	desc = "Equipment for medical exosuits. Generates a focused beam of medical nanites."
 	icon_state = "mecha_medigun"
 	energy_drain = 10
-	range = MELEE|RANGED
+	range = MECHA_MELEE|MECHA_RANGED
 	equip_cooldown = 0
 	var/obj/item/gun/medbeam/mech/medigun
-	materials = list(MAT_METAL = 15000, MAT_GLASS = 8000, MAT_PLASMA = 3000, MAT_GOLD = 8000, MAT_DIAMOND = 2000)
+	materials = list(/datum/material/iron = 15000, /datum/material/glass = 8000, /datum/material/plasma = 3000, /datum/material/gold = 8000, /datum/material/diamond = 2000)
 
 /obj/item/mecha_parts/mecha_equipment/medical/mechmedbeam/Initialize()
 	. = ..()

@@ -12,7 +12,7 @@
 	var/on = FALSE
 	var/current_temperature = SHOWER_NORMAL
 	var/datum/looping_sound/showering/soundloop
-	var/reagent_id = "water"
+	var/reagent_id = /datum/reagent/water
 	var/reaction_volume = 200
 
 /obj/machinery/shower/Initialize()
@@ -211,7 +211,7 @@
 		return PROCESS_KILL
 
 /obj/machinery/shower/deconstruct(disassembled = TRUE)
-	new /obj/item/stack/sheet/metal(drop_location(), 3)
+	new /obj/item/stack/sheet/iron(drop_location(), 3)
 	qdel(src)
 
 /obj/machinery/shower/proc/check_heat(mob/living/L)

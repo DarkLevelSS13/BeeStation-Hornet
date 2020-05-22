@@ -31,7 +31,9 @@
 	var/spam_flag = 0
 	var/contact_poison // Reagent ID to transfer on contact
 	var/contact_poison_volume = 0
+	var/burnt = FALSE
 
+	var/next_write_time = 0
 
 /obj/item/paper/pickup(user)
 	if(contact_poison && ishuman(user))
@@ -42,14 +44,12 @@
 			contact_poison = null
 	..()
 
-
 /obj/item/paper/Initialize()
 	. = ..()
 	pixel_y = rand(-8, 8)
 	pixel_x = rand(-9, 9)
 	update_icon()
 	updateinfolinks()
-
 
 /obj/item/paper/update_icon()
 
@@ -63,7 +63,7 @@
 
 
 /obj/item/paper/examine(mob/user)
-	..()
+	. = ..()
 	var/datum/asset/assets = get_asset_datum(/datum/asset/spritesheet/simple/paper)
 	assets.send(user)
 
@@ -72,11 +72,10 @@
 			user << browse("<HTML><HEAD><TITLE>[name]</TITLE></HEAD><BODY>[info]<HR>[stamps]</BODY></HTML>", "window=[name]")
 			onclose(user, "[name]")
 		else
-			user << browse("<HTML><HEAD><TITLE>[name]</TITLE></HEAD><BODY>[stars(info)]<HR>[stamps]</BODY></HTML>", "window=[name]")
+			user << browse("<HTML><HEAD><TITLE>[name]</TITLE></HEAD><BODY>[burnt ? info : stars(info)]<HR>[stamps]</BODY></HTML>", "window=[name]")
 			onclose(user, "[name]")
 	else
-		to_chat(user, "<span class='warning'>You're too far away to read it!</span>")
-
+		. += "<span class='notice'>It is too far away.</span>"
 
 /obj/item/paper/verb/rename()
 	set name = "Rename paper"
@@ -94,7 +93,10 @@
 			return
 	var/n_name = stripped_input(usr, "What would you like to label the paper?", "Paper Labelling", null, MAX_NAME_LEN)
 	if((loc == usr && usr.stat == CONSCIOUS))
-		name = "paper[(n_name ? text("- '[n_name]'") : null)]"
+		if(CHAT_FILTER_CHECK(n_name))
+			to_chat(usr, "<span class='warning'>That name contains prohibited word(s)!</span>")
+		else
+			name = "paper[(n_name ? text("- '[n_name]'") : null)]"
 	add_fingerprint(usr)
 
 
@@ -113,7 +115,6 @@
 			playsound(loc, 'sound/items/bikehorn.ogg', 50, 1)
 			addtimer(CALLBACK(src, .proc/reset_spamflag), 20)
 
-
 /obj/item/paper/attack_ai(mob/living/silicon/ai/user)
 	var/dist
 	if(istype(user) && user.current) //is AI
@@ -124,9 +125,8 @@
 		usr << browse("<HTML><HEAD><TITLE>[name]</TITLE></HEAD><BODY>[info]<HR>[stamps]</BODY></HTML>", "window=[name]")
 		onclose(usr, "[name]")
 	else
-		usr << browse("<HTML><HEAD><TITLE>[name]</TITLE></HEAD><BODY>[stars(info)]<HR>[stamps]</BODY></HTML>", "window=[name]")
+		usr << browse("<HTML><HEAD><TITLE>[name]</TITLE></HEAD><BODY>[burnt ? info : stars(info)]<HR>[stamps]</BODY></HTML>", "window=[name]")
 		onclose(usr, "[name]")
-
 
 /obj/item/paper/proc/addtofield(id, text, links = 0)
 	var/locid = 0
@@ -167,11 +167,13 @@
 
 
 /obj/item/paper/proc/updateinfolinks()
+	if(burnt)
+		return
 	info_links = info
 	for(var/i in 1 to min(fields, 15))
 		addtofield(i, "<font face=\"[PEN_FONT]\"><A href='?src=[REF(src)];write=[i]'>write</A></font>", 1)
 	info_links = info_links + "<font face=\"[PEN_FONT]\"><A href='?src=[REF(src)];write=end'>write</A></font>"
-
+	info_links = info_links + "<BR><BR><font face=\"[PEN_FONT]\"><A href='?src=[REF(src)];help=end'>Paper Help</A></font>"
 
 /obj/item/paper/proc/clearpaper()
 	info = null
@@ -186,15 +188,66 @@
 	if(length(t) < 1)		//No input means nothing needs to be parsed
 		return
 
-	t = parsemarkdown(t, user, iscrayon)
+//	t = copytext(sanitize(t),1,MAX_MESSAGE_LEN)
+
+	t = replacetext(t, "\n", "<BR>")
+	t = replacetext(t, "\[center\]", "<center>")
+	t = replacetext(t, "\[/center\]", "</center>")
+	t = replacetext(t, "\[br\]", "<BR>")
+	t = replacetext(t, "\[b\]", "<B>")
+	t = replacetext(t, "\[/b\]", "</B>")
+	t = replacetext(t, "\[i\]", "<I>")
+	t = replacetext(t, "\[/i\]", "</I>")
+	t = replacetext(t, "\[u\]", "<U>")
+	t = replacetext(t, "\[/u\]", "</U>")
+	t = replacetext(t, "\[time\]", "[station_time_timestamp(format = "hh:mm")]")
+	t = replacetext(t, "\[large\]", "<font size=\"4\">")
+	t = replacetext(t, "\[/large\]", "</font>")
+	t = replacetext(t, "\[field\]", "<span class=\"paper_field\"></span>")
+	t = replacetext(t, "\[h1\]", "<H1>")
+	t = replacetext(t, "\[/h1\]", "</H1>")
+	t = replacetext(t, "\[h2\]", "<H2>")
+	t = replacetext(t, "\[/h2\]", "</H2>")
+	t = replacetext(t, "\[h3\]", "<H3>")
+	t = replacetext(t, "\[/h3\]", "</H3>")
+	t = replacetext(t, "\[sign\]", "<font face=\"[SIGNFONT]\"><i>[user.real_name]</i></font>")
+	t = replacetext(t, "\[tab\]", "&nbsp;&nbsp;&nbsp;&nbsp;")
 
 	if(!iscrayon)
+		t = replacetext(t, "\[*\]", "<li>")
+		t = replacetext(t, "\[hr\]", "<HR>")
+		t = replacetext(t, "\[small\]", "<font size = \"1\">")
+		t = replacetext(t, "\[/small\]", "</font>")
+		t = replacetext(t, "\[list\]", "<ul>")
+		t = replacetext(t, "\[/list\]", "</ul>")
+		t = replacetext(t, "\[table\]", "<table border=1 cellspacing=0 cellpadding=3 style='border: 1px solid black;'>")
+		t = replacetext(t, "\[/table\]", "</td></tr></table>")
+		t = replacetext(t, "\[grid\]", "<table>")
+		t = replacetext(t, "\[/grid\]", "</td></tr></table>")
+		t = replacetext(t, "\[row\]", "</td><tr>")
+		t = replacetext(t, "\[cell\]", "<td>")
+
 		t = "<font face=\"[P.font]\" color=[P.colour]>[t]</font>"
-	else
+	else // If it is a crayon, and he still tries to use these, make them empty!
 		var/obj/item/toy/crayon/C = P
+		t = replacetext(t, "\[*\]", "")
+		t = replacetext(t, "\[hr\]", "")
+		t = replacetext(t, "\[small\]", "")
+		t = replacetext(t, "\[/small\]", "")
+		t = replacetext(t, "\[list\]", "")
+		t = replacetext(t, "\[/list\]", "")
+		t = replacetext(t, "\[table\]", "")
+		t = replacetext(t, "\[/table\]", "")
+		t = replacetext(t, "\[grid\]", "")
+		t = replacetext(t, "\[/grid\]", "")
+		t = replacetext(t, "\[row\]", "")
+		t = replacetext(t, "\[cell\]", "")
+
 		t = "<font face=\"[CRAYON_FONT]\" color=[C.paint_color]><b>[t]</b></font>"
 
-	// Count the fields
+//	t = replacetext(t, "#", "") // Junk converted to nothing!
+
+//Count the fields
 	var/laststart = 1
 	while(fields < 15)
 		var/i = findtext(t, "<span class=\"paper_field\">", laststart)
@@ -220,27 +273,38 @@
 /obj/item/paper/proc/openhelp(mob/user)
 	user << browse({"<HTML><HEAD><TITLE>Paper Help</TITLE></HEAD>
 	<BODY>
-		You can use backslash (\\) to escape special characters.<br>
+		<b><center>Crayon & Pen commands</center></b><br>
 		<br>
-		<b><center>Crayon&Pen commands</center></b><br>
-		<br>
-		# text : Defines a header.<br>
-		|text| : Centers the text.<br>
-		**text** : Makes the text <b>bold</b>.<br>
-		*text* : Makes the text <i>italic</i>.<br>
-		^text^ : Increases the <font size = \"4\">size</font> of the text.<br>
-		%s : Inserts a signature of your name in a foolproof way.<br>
-		%f : Inserts an invisible field which lets you start type from there. Useful for forms.<br>
+		\[br\] : Creates a linebreak.<br>
+		\[center\] - \[/center\] : Centers the text.<br>
+		\[b\] - \[/b\] : Makes the text <b>bold</b>.<br>
+		\[i\] - \[/i\] : Makes the text <i>italic</i>.<br>
+		\[u\] - \[/u\] : Makes the text <u>underlined</u>.<br>
+		\[time\] : Inserts the current station time, formatted as HH:MM.<br>
+		\[large\] - \[/large\] : Increases the <font size = \"4\">size</font> of the text.<br>
+		\[field\] : Inserts an invisible field which lets you start typing from there. Useful for forms.<br>
+		\[h1\] - \[/h1\] : Makes the text a <h1>large header</h1>.<br>
+		\[h2\] - \[/h2\] : Makes the text a <h2>medium header</h2>.<br>
+		\[h3\] - \[/h3\] : Makes the text a <h3>small header</h3>.<br>
+		\[sign\] : Inserts a signature of your name in a foolproof way.<br>
+		\[tab\] : Inserts a tab, to indent text.<br>
 		<br>
 		<b><center>Pen exclusive commands</center></b><br>
-		((text)) : Decreases the <font size = \"1\">size</font> of the text.<br>
-		* item : An unordered list item.<br>
-		&nbsp;&nbsp;* item: An unordered list child item.<br>
-		--- : Adds a horizontal rule.
+		\[small\] - \[/small\] : Decreases the <font size = \"1\">size</font> of the text.<br>
+		\[list\] - \[/list\] : A list.<br>
+		\[*\] : A dot used for lists.<br>
+		\[hr\] : Adds a horizontal rule.
+		\[table\] - \[/table\] : Adds a table. Cells have a solid black border.<br>
+		\[grid\] - \[/grid\] : Same as \[table\], except cells have no border.<br>
+		\[row\] : Adds a row to a \[table\] or \[grid\]. Required even for the first row.<br>
+		\[cell\] : Adds a cell to a \[row\]. Required even for the first cell. Can be followed by \[field\] to make the cell a field.<br>
 	</BODY></HTML>"}, "window=paper_help")
 
-
 /obj/item/paper/Topic(href, href_list)
+	if(next_write_time > world.time)
+		message_admins("[usr.ckey] may be spamming paper Topic() calls, likely malicious if this message continues repeating")
+		return
+
 	..()
 	var/literate = usr.is_literate()
 	if(!usr.canUseTopic(src, BE_CLOSE, literate))
@@ -250,6 +314,7 @@
 		openhelp(usr)
 		return
 	if(href_list["write"])
+		next_write_time = world.time + (1 SECONDS)
 		var/id = href_list["write"]
 		var/t =  stripped_multiline_input("Enter what you want to write:", "Write", no_trim=TRUE)
 		if(!t || !usr.canUseTopic(src, BE_CLOSE, literate))
@@ -276,7 +341,6 @@
 			usr << browse("<HTML><HEAD><TITLE>[name]</TITLE></HEAD><BODY>[info_links]<HR>[stamps]</BODY><div align='right'style='position:fixed;bottom:0;font-style:bold;'><A href='?src=[REF(src)];help=1'>\[?\]</A></div></HTML>", "window=[name]") // Update the window
 			update_icon()
 
-
 /obj/item/paper/attackby(obj/item/P, mob/living/carbon/human/user, params)
 	..()
 
@@ -298,9 +362,11 @@
 
 		if(!in_range(src, user))
 			return
-
+		if(burnt)
+			to_chat(user, "<span class='warning'>You can't stamp a burnt paper!</span>")
+			return
 		var/datum/asset/spritesheet/sheet = get_asset_datum(/datum/asset/spritesheet/simple/paper)
-		if (isnull(stamps))
+		if(isnull(stamps))
 			stamps = sheet.css_tag()
 		stamps += sheet.icon_tag(P.icon_state)
 		var/mutable_appearance/stampoverlay = mutable_appearance('icons/obj/bureaucracy.dmi', "paper_[P.icon_state]")
@@ -335,8 +401,9 @@
 	..()
 	if(!(resistance_flags & FIRE_PROOF))
 		icon_state = "paper_onfire"
-		info = "[stars(info)]"
-
+		info = "<font face=\"[SIGNFONT]\"><i>The paper has been burned. You can't make anything out.</i></font>"
+		stamps = null
+		burnt = TRUE
 
 /obj/item/paper/extinguish()
 	..()

@@ -3,6 +3,7 @@
 	desc = "A kitchen and restaurant equipment vendor."
 	product_ads = "Mm, food stuffs!;Food and food accessories.;Get your plates!;You like forks?;I like forks.;Woo, utensils.;You don't really need these..."
 	icon_state = "dinnerware"
+	light_color = LIGHT_COLOR_BLUEGREEN
 	products = list(/obj/item/storage/bag/tray = 8,
 					/obj/item/reagent_containers/glass/bowl = 20,
 					/obj/item/kitchen/fork = 6,
@@ -14,7 +15,8 @@
 					/obj/item/reagent_containers/food/condiment/peppermill = 5,
 					/obj/item/clothing/suit/apron/chef = 2,
 					/obj/item/kitchen/rollingpin = 2,
-					/obj/item/kitchen/knife = 2)
+					/obj/item/kitchen/knife = 2,
+					/obj/item/book/granter/crafting_recipe/cooking_sweets_101 = 2)
 	contraband = list(/obj/item/kitchen/rollingpin = 2,
 					  /obj/item/kitchen/knife/butcher = 2)
 	refill_canister = /obj/item/vending_refill/dinnerware

@@ -26,6 +26,7 @@ em						{font-style: normal;	font-weight: bold;}
 .prefix					{					font-weight: bold;}
 
 .ooc					{					font-weight: bold;}
+.dooc					{color: #830094;	font-weight: bold;}
 .adminobserverooc		{color: #0099cc;	font-weight: bold;}
 .adminooc				{color: #700038;	font-weight: bold;}
 
@@ -60,6 +61,8 @@ h1.alert, h2.alert		{color: #000000;}
 
 .emote					{					font-style: italic;}
 .selecteddna			{color: #ffffff; 	background-color: #001B1B}
+
+.examine 				{font-size: 8pt;}
 
 .attack					{color: #ff0000;}
 .disarm					{color: #990000;}
@@ -154,6 +157,7 @@ h1.alert, h2.alert		{color: #000000;}
 .greentext				{color: #00FF00;	font-size: 3;}
 .redtext				{color: #FF0000;	font-size: 3;}
 .clown					{color: #FF69Bf;	font-size: 3; font-family: "Comic Sans MS", cursive, sans-serif; font-weight: bold;}
+.singing				{font-family: "Trebuchet MS", cursive, sans-serif; font-style: italic;}
 .his_grace				{color: #15D512;	font-family: "Courier New", cursive, sans-serif; font-style: italic;}
 .hypnophrase			{color: #3bb5d3;	font-weight: bold; animation: hypnocolor 1500ms infinite;}
 @keyframes hypnocolor {

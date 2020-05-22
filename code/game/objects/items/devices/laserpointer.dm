@@ -8,7 +8,7 @@
 	flags_1 = CONDUCT_1
 	item_flags = NOBLUDGEON
 	slot_flags = ITEM_SLOT_BELT
-	materials = list(MAT_METAL=500, MAT_GLASS=500)
+	materials = list(/datum/material/iron=500, /datum/material/glass=500)
 	w_class = WEIGHT_CLASS_SMALL
 	var/turf/pointer_loc
 	var/energy = 5
@@ -57,12 +57,12 @@
 		return ..()
 
 /obj/item/laser_pointer/examine(mob/user)
-	..()
+	. = ..()
 	if(in_range(user, src) || isobserver(user))
 		if(!diode)
-			to_chat(user, "<span class='notice'>The diode is missing.<span>")
+			. += "<span class='notice'>The diode is missing.<span>"
 		else
-			to_chat(user, "<span class='notice'>A class <b>[diode.rating]</b> laser diode is installed. It is <i>screwed</i> in place.<span>")
+			. += "<span class='notice'>A class <b>[diode.rating]</b> laser diode is installed. It is <i>screwed</i> in place.<span>"
 
 /obj/item/laser_pointer/afterattack(atom/target, mob/living/user, flag, params)
 	. = ..()

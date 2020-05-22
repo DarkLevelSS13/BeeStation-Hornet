@@ -91,6 +91,8 @@
 
 /datum/config_entry/flag/allow_vote_mode	// allow votes to change mode
 
+/datum/config_entry/flag/allow_vote_map	// allow votes to change map
+
 /datum/config_entry/number/vote_delay	// minimum time between voting sessions (deciseconds, 10 minute default)
 	config_entry_value = 6000
 	integer = FALSE
@@ -208,6 +210,8 @@
 /datum/config_entry/string/githuburl
 	config_entry_value = "https://www.github.com/tgstation/-tg-station"
 
+/datum/config_entry/string/issue_label
+
 /datum/config_entry/string/donateurl
 	config_entry_value = "https://www.patreon.com/user?u=10639001"
 
@@ -285,6 +289,8 @@
 	integer = FALSE
 
 /datum/config_entry/flag/maprotation
+
+/datum/config_entry/flag/automapvote
 
 /datum/config_entry/number/maprotatechancedelta
 	config_entry_value = 0.75
@@ -368,6 +374,12 @@
 /datum/config_entry/flag/announce_admin_login
 
 /datum/config_entry/flag/allow_map_voting
+	deprecated_by = /datum/config_entry/flag/preference_map_voting
+
+/datum/config_entry/flag/allow_map_voting/DeprecationUpdate(value)
+	return value
+
+/datum/config_entry/flag/preference_map_voting
 
 /datum/config_entry/number/client_warn_version
 	config_entry_value = null
@@ -482,3 +494,35 @@
 
 /datum/config_entry/flag/reopen_roundstart_suicide_roles_command_report
 
+/datum/config_entry/string/metacurrency_name
+	config_entry_value = "MetaCoin"
+
+/datum/config_entry/flag/grant_metacurrency
+
+/datum/config_entry/flag/respect_global_bans
+
+//Fail2Topic settings.
+/datum/config_entry/number/topic_rate_limit
+	config_entry_value = 5
+	min_val = 1
+
+/datum/config_entry/number/topic_max_fails
+	config_entry_value = 5
+	min_val = 1
+
+/datum/config_entry/string/topic_rule_name
+	config_entry_value = "_DD_Fail2topic"
+
+/datum/config_entry/number/topic_max_size
+	config_entry_value = 500
+
+/datum/config_entry/flag/topic_enabled
+
+/datum/config_entry/flag/auto_profile
+
+/datum/config_entry/flag/ic_filter_enabled
+
+/datum/config_entry/flag/ooc_filter_enabled
+
+/datum/config_entry/string/redirect_address
+	config_entry_value = ""

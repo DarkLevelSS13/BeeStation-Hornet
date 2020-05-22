@@ -34,7 +34,7 @@
 	desc = "Moves your camera to your blob core."
 
 /obj/screen/blob/JumpToCore/MouseEntered(location,control,params)
-	if(hud && hud.mymob && isovermind(hud.mymob))
+	if(hud?.mymob && isovermind(hud.mymob))
 		var/mob/camera/blob/B = hud.mymob
 		if(!B.placed)
 			name = "Place Blob Core"
@@ -93,8 +93,8 @@
 
 /obj/screen/blob/ReadaptStrain
 	icon_state = "ui_chemswap"
-	name = "Readapt Chemical (40)"
-	desc = "Randomly rerolls your chemical for 40 resources."
+	name = "Readapt Strain (40)"
+	desc = "Allows you to choose a new strain from 4 random choices for 40 resources."
 
 /obj/screen/blob/ReadaptStrain/MouseEntered(location,control,params)
 	if(hud && hud.mymob && isovermind(hud.mymob))
@@ -133,17 +133,21 @@
 	blobpwrdisplay.mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 	blobpwrdisplay.layer = ABOVE_HUD_LAYER
 	blobpwrdisplay.plane = ABOVE_HUD_PLANE
+	blobpwrdisplay.hud = src
 	infodisplay += blobpwrdisplay
 
 	healths = new /obj/screen/healths/blob()
+	healths.hud = src
 	infodisplay += healths
 
 	using = new /obj/screen/blob/BlobHelp()
 	using.screen_loc = "WEST:6,NORTH:-3"
+	using.hud = src
 	static_inventory += using
 
 	using = new /obj/screen/blob/JumpToNode()
 	using.screen_loc = ui_inventory
+	using.hud = src
 	static_inventory += using
 
 	using = new /obj/screen/blob/JumpToCore()
@@ -153,18 +157,22 @@
 
 	using = new /obj/screen/blob/Blobbernaut()
 	using.screen_loc = ui_belt
+	using.hud = src
 	static_inventory += using
 
 	using = new /obj/screen/blob/ResourceBlob()
 	using.screen_loc = ui_back
+	using.hud = src
 	static_inventory += using
 
 	using = new /obj/screen/blob/NodeBlob()
 	using.screen_loc = ui_hand_position(2)
+	using.hud = src
 	static_inventory += using
 
 	using = new /obj/screen/blob/FactoryBlob()
 	using.screen_loc = ui_hand_position(1)
+	using.hud = src
 	static_inventory += using
 
 	using = new /obj/screen/blob/ReadaptStrain()
@@ -174,4 +182,5 @@
 
 	using = new /obj/screen/blob/RelocateCore()
 	using.screen_loc = ui_storage2
+	using.hud = src
 	static_inventory += using

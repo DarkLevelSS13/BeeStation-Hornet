@@ -151,7 +151,7 @@
 /turf/open/floor/plating/ironsand
 	gender = PLURAL
 	name = "iron sand"
-	desc = "Like sand, but more <i>metal</i>."
+	desc = "Like sand, but more <i>iron</i>."
 	footstep = FOOTSTEP_SAND
 	barefootstep = FOOTSTEP_SAND
 	clawfootstep = FOOTSTEP_SAND
@@ -194,8 +194,7 @@
 /turf/open/floor/plating/ice/smooth
 	icon_state = "smooth"
 	smooth = SMOOTH_MORE | SMOOTH_BORDER
-	canSmoothWith = list(/turf/open/floor/plating/ice/smooth, /turf/open/floor/plating/ice)
-	/turf/open/floor/plating/ice/colder
+	canSmoothWith = list(/turf/open/floor/plating/ice/smooth, /turf/open/floor/plating/ice, /turf/open/floor/plating/ice/colder)
 
 /turf/open/floor/plating/ice/colder
 	temperature = 140

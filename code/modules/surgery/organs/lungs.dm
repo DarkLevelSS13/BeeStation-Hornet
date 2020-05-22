@@ -1,10 +1,19 @@
 /obj/item/organ/lungs
+	var/failed = FALSE
+	var/operated = FALSE	//whether we can still have our damages fixed through surgery
 	name = "lungs"
 	icon_state = "lungs"
 	zone = BODY_ZONE_CHEST
 	slot = ORGAN_SLOT_LUNGS
 	gender = PLURAL
-	w_class = WEIGHT_CLASS_NORMAL
+	w_class = WEIGHT_CLASS_SMALL
+
+	healing_factor = STANDARD_ORGAN_HEALING
+	decay_factor = STANDARD_ORGAN_DECAY
+
+	high_threshold_passed = "<span class='warning'>You feel some sort of constriction around your chest as your breathing becomes shallow and rapid.</span>"
+	now_fixed = "<span class='warning'>Your lungs seem to once again be able to hold air.</span>"
+	high_threshold_cleared = "<span class='info'>The constriction around your chest loosens as your breathing calms down.</span>"
 
 	//Breath damage
 
@@ -52,7 +61,7 @@
 	var/heat_level_3_damage = HEAT_GAS_DAMAGE_LEVEL_3
 	var/heat_damage_type = BURN
 
-	var/crit_stabilizing_reagent = "epinephrine"
+	var/crit_stabilizing_reagent = /datum/reagent/medicine/epinephrine
 
 
 /obj/item/organ/lungs/proc/check_breath(datum/gas_mixture/breath, mob/living/carbon/human/H)
@@ -62,7 +71,7 @@
 		return
 
 	if(!breath || (breath.total_moles() == 0))
-		if(H.reagents.has_reagent(crit_stabilizing_reagent))
+		if(H.reagents.has_reagent(crit_stabilizing_reagent, needs_metabolizing = TRUE))
 			return
 		if(H.health >= H.crit_threshold)
 			H.adjustOxyLoss(HUMAN_MAX_OXYLOSS)
@@ -241,13 +250,13 @@
 		var/bz_pp = breath.get_breath_partial_pressure(breath_gases[/datum/gas/bz][MOLES])
 		if(bz_pp > BZ_trip_balls_min)
 			H.hallucination += 10
-			H.reagents.add_reagent("bz_metabolites",5)
+			H.reagents.add_reagent(/datum/reagent/bz_metabolites,5)
 			if(prob(33))
-				H.adjustBrainLoss(3, 150)
+				H.adjustOrganLoss(ORGAN_SLOT_BRAIN, 3, 150)
 
 		else if(bz_pp > 0.01)
 			H.hallucination += 5
-			H.reagents.add_reagent("bz_metabolites",1)
+			H.reagents.add_reagent(/datum/reagent/bz_metabolites,1)
 
 
 	// Tritium
@@ -271,15 +280,15 @@
 			H.adjustFireLoss(nitryl_pp/4)
 		gas_breathed = breath_gases[/datum/gas/nitryl][MOLES]
 		if (gas_breathed > gas_stimulation_min)
-			H.reagents.add_reagent("no2",1)
+			H.reagents.add_reagent(/datum/reagent/nitryl,1)
 
 		breath_gases[/datum/gas/nitryl][MOLES]-=gas_breathed
 
 	// Stimulum
 		gas_breathed = breath_gases[/datum/gas/stimulum][MOLES]
 		if (gas_breathed > gas_stimulation_min)
-			var/existing = H.reagents.get_reagent_amount("stimulum")
-			H.reagents.add_reagent("stimulum",max(0, 1 - existing))
+			var/existing = H.reagents.get_reagent_amount(/datum/reagent/stimulum)
+			H.reagents.add_reagent(/datum/reagent/stimulum,max(0, 1 - existing))
 		breath_gases[/datum/gas/stimulum][MOLES]-=gas_breathed
 
 	// Miasma
@@ -378,9 +387,19 @@
 			if(prob(20))
 				to_chat(H, "<span class='warning'>You feel [hot_message] in your [name]!</span>")
 
+/obj/item/organ/lungs/on_life()
+	..()
+	if((!failed) && ((organ_flags & ORGAN_FAILING)))
+		if(owner.stat == CONSCIOUS)
+			owner.visible_message("<span class='userdanger'>[owner] grabs [owner.p_their()] throat, struggling for breath!</span>")
+		failed = TRUE
+	else if(!(organ_flags & ORGAN_FAILING))
+		failed = FALSE
+	return
+
 /obj/item/organ/lungs/prepare_eat()
 	var/obj/S = ..()
-	S.reagents.add_reagent("salbutamol", 5)
+	S.reagents.add_reagent(/datum/reagent/medicine/salbutamol, 5)
 	return S
 
 /obj/item/organ/lungs/plasmaman
@@ -392,11 +411,24 @@
 	safe_toxins_min = 16 //We breath THIS!
 	safe_toxins_max = 0
 
+/obj/item/organ/lungs/slime
+	name = "vacuole"
+	desc = "A large organelle designed to store oxygen and other important gasses."
+
+	safe_toxins_max = 0 //We breathe this to gain POWER.
+
+/obj/item/organ/lungs/slime/check_breath(datum/gas_mixture/breath, mob/living/carbon/human/H)
+	. = ..()
+	if (breath.gases[/datum/gas/plasma])
+		var/plasma_pp = breath.get_breath_partial_pressure(breath.gases[/datum/gas/plasma][MOLES])
+		owner.blood_volume += (0.2 * plasma_pp) // 10/s when breathing literally nothing but plasma, which will suffocate you.
+
 /obj/item/organ/lungs/cybernetic
 	name = "cybernetic lungs"
 	desc = "A cybernetic version of the lungs found in traditional humanoid entities. Allows for greater intakes of oxygen than organic lungs, requiring slightly less pressure."
 	icon_state = "lungs-c"
-	synthetic = TRUE
+	organ_flags = ORGAN_SYNTHETIC
+	maxHealth = 1.1 * STANDARD_ORGAN_THRESHOLD
 	safe_oxygen_min = 13
 
 /obj/item/organ/lungs/cybernetic/emp_act()
@@ -412,7 +444,15 @@
 	icon_state = "lungs-c-u"
 	safe_toxins_max = 20
 	safe_co2_max = 20
+	maxHealth = 2 * STANDARD_ORGAN_THRESHOLD
 
 	cold_level_1_threshold = 200
 	cold_level_2_threshold = 140
 	cold_level_3_threshold = 100
+
+obj/item/organ/lungs/apid
+	name = "apid lungs"
+	desc = "Lungs from an apid, or beeperson. Thanks to the many spiracles an apid has, these lungs are capable of gathering more oxygen from low-pressure enviroments."
+	icon_state = "lungs"
+	safe_oxygen_min = 8 
+

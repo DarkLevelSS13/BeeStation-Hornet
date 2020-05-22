@@ -57,6 +57,10 @@ SUBSYSTEM_DEF(ticker)
 	var/mode_result = "undefined"
 	var/end_state = "undefined"
 
+	//Crew Objective stuff
+	var/list/crewobjlist = list()
+	var/list/crewobjjobs = list()
+
 /datum/controller/subsystem/ticker/Initialize(timeofday)
 	load_mode()
 
@@ -117,15 +121,34 @@ SUBSYSTEM_DEF(ticker)
 
 
 	if(!GLOB.syndicate_code_phrase)
-		GLOB.syndicate_code_phrase	= generate_code_phrase()
+		GLOB.syndicate_code_phrase	= generate_code_phrase(return_list=TRUE)
+
+		var/codewords = jointext(GLOB.syndicate_code_phrase, "|")
+		var/regex/codeword_match = new("([codewords])", "ig")
+
+		GLOB.syndicate_code_phrase_regex = codeword_match
+
 	if(!GLOB.syndicate_code_response)
-		GLOB.syndicate_code_response = generate_code_phrase()
+		GLOB.syndicate_code_response = generate_code_phrase(return_list=TRUE)
+
+		var/codewords = jointext(GLOB.syndicate_code_response, "|")
+		var/regex/codeword_match = new("([codewords])", "ig")
+
+		GLOB.syndicate_code_response_regex = codeword_match
 
 	start_at = world.time + (CONFIG_GET(number/lobby_countdown) * 10)
 	if(CONFIG_GET(flag/randomize_shift_time))
 		gametime_offset = rand(0, 23) HOURS
 	else if(CONFIG_GET(flag/shift_time_realtime))
 		gametime_offset = world.timeofday
+
+	crewobjlist = typesof(/datum/objective/crew)
+	for(var/hooray in crewobjlist) //taken from old Hippie's "job2obj" proc with adjustments.
+		var/datum/objective/crew/obj = hooray
+		var/list/availableto = splittext(initial(obj.jobs),",")
+		for(var/job in availableto)
+			crewobjjobs["[job]"] += list(obj)
+
 	return ..()
 
 /datum/controller/subsystem/ticker/fire()
@@ -342,7 +365,7 @@ SUBSYSTEM_DEF(ticker)
 
 /datum/controller/subsystem/ticker/proc/collect_minds()
 	for(var/mob/dead/new_player/P in GLOB.player_list)
-		if(P.new_character && P.new_character.mind)
+		if(P.new_character?.mind)
 			SSticker.minds += P.new_character.mind
 		CHECK_TICK
 
@@ -412,7 +435,7 @@ SUBSYSTEM_DEF(ticker)
 		queued_players.len = 0
 		queue_delay = 0
 		return
-		
+
 	queue_delay++
 	var/mob/dead/new_player/next_in_line = queued_players[1]
 
@@ -584,7 +607,7 @@ SUBSYSTEM_DEF(ticker)
 
 /datum/controller/subsystem/ticker/proc/Reboot(reason, end_string, delay)
 	set waitfor = FALSE
-	if(usr && !check_rights(R_SERVER, TRUE))
+	if(usr && !check_rights(R_ADMIN || R_SERVER, TRUE))
 		return
 
 	if(!delay)
@@ -623,16 +646,9 @@ SUBSYSTEM_DEF(ticker)
 	save_admin_data()
 	update_everything_flag_in_db()
 	if(!round_end_sound)
-		round_end_sound = pick(\
-		'sound/roundend/newroundsexy.ogg',
-		'sound/roundend/apcdestroyed.ogg',
-		'sound/roundend/bangindonk.ogg',
-		'sound/roundend/leavingtg.ogg',
-		'sound/roundend/its_only_game.ogg',
-		'sound/roundend/yeehaw.ogg',
-		'sound/roundend/disappointed.ogg',
-		'sound/roundend/scrunglartiy.ogg'\
-		)
+		var/list/tracks = flist("sound/roundend/")
+		if(tracks.len)
+			round_end_sound = "sound/roundend/[pick(tracks)]"
 
 	SEND_SOUND(world, sound(round_end_sound))
 	text2file(login_music, "data/last_round_lobby_music.txt")

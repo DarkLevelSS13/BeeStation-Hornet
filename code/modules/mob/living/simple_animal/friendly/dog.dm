@@ -9,10 +9,11 @@
 	speak_emote = list("barks", "woofs")
 	emote_hear = list("barks!", "woofs!", "yaps.","pants.")
 	emote_see = list("shakes its head.", "chases its tail.","shivers.")
-	faction = list("dog")
+	faction = list("neutral")
 	see_in_dark = 5
 	speak_chance = 1
 	turns_per_move = 10
+	mobsay_color = "#ECDA88"
 
 	do_footstep = TRUE
 
@@ -201,7 +202,11 @@
 
 		switch(add_to)
 			if("collar")
-				add_collar(usr.get_active_held_item(), usr)
+				var/obj/item/clothing/neck/petcollar/P = usr.get_active_held_item()
+				if(!istype(P))
+					to_chat(usr,"<span class='warning'>That's not a collar.</span>")
+					return
+				add_collar(P, usr)
 				update_corgi_fluff()
 
 			if(BODY_ZONE_HEAD)
@@ -316,7 +321,7 @@
 	desc = initial(desc)
 	set_light(0)
 
-	if(inventory_head && inventory_head.dog_fashion)
+	if(inventory_head?.dog_fashion)
 		var/datum/dog_fashion/DF = new inventory_head.dog_fashion(src)
 		DF.apply(src)
 
@@ -361,7 +366,7 @@
 		icon_state = "old_corgi"
 		icon_living = "old_corgi"
 		icon_dead = "old_corgi_dead"
-		desc = "At a ripe old age of [record_age] Ian's not as spry as he used to be, but he'll always be the HoP's beloved corgi." //RIP
+		desc = "At a ripe old age of [record_age], Ian's not as spry as he used to be, but he'll always be the HoP's beloved corgi." //RIP
 		turns_per_move = 20
 
 /mob/living/simple_animal/pet/dog/corgi/Ian/Life()
@@ -444,13 +449,16 @@
 				step_to(src,movement_target,1)
 
 				if(movement_target)		//Not redundant due to sleeps, Item can be gone in 6 decisecomds
-					if (movement_target.loc.x < src.x)
+					var/turf/T = get_turf(movement_target)
+					if(!T)
+						return
+					if (T.x < src.x)
 						setDir(WEST)
-					else if (movement_target.loc.x > src.x)
+					else if (T.x > src.x)
 						setDir(EAST)
-					else if (movement_target.loc.y < src.y)
+					else if (T.y < src.y)
 						setDir(SOUTH)
-					else if (movement_target.loc.y > src.y)
+					else if (T.y > src.y)
 						setDir(NORTH)
 					else
 						setDir(SOUTH)
@@ -483,7 +491,7 @@
 	icon_state = "narsian"
 	icon_living = "narsian"
 	icon_dead = "narsian_dead"
-	faction = list("dog", "cult")
+	faction = list("neutral", "cult")
 	gold_core_spawnable = NO_SPAWN
 	nofur = TRUE
 	unique_pet = TRUE
@@ -491,11 +499,16 @@
 /mob/living/simple_animal/pet/dog/corgi/narsie/Life()
 	..()
 	for(var/mob/living/simple_animal/pet/P in range(1, src))
-		if(P != src && prob(5))
+		if(P != src && !istype(P,/mob/living/simple_animal/pet/dog/corgi/narsie))
 			visible_message("<span class='warning'>[src] devours [P]!</span>", \
 			"<span class='cult big bold'>DELICIOUS SOULS</span>")
 			playsound(src, 'sound/magic/demon_attack1.ogg', 75, TRUE)
 			narsie_act()
+			if(P.mind)
+				if(P.mind.hasSoul)
+					P.mind.hasSoul = FALSE //Nars-Ian ate your soul; you don't have one anymore
+				else
+					visible_message("<span class='cult big bold'>... Aw, someone beat me to this one.</span>")
 			P.gib()
 
 /mob/living/simple_animal/pet/dog/corgi/narsie/update_corgi_fluff()

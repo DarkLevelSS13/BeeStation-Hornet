@@ -607,16 +607,16 @@ Congratulations! You are now trained for invasive xenobiology research!"}
 	. = ..()
 
 /obj/item/abductor/baton/examine(mob/user)
-	..()
+	. = ..()
 	switch(mode)
 		if(BATON_STUN)
-			to_chat(user, "<span class='warning'>The baton is in stun mode.</span>")
+			. += "<span class='warning'>The baton is in stun mode.</span>"
 		if(BATON_SLEEP)
-			to_chat(user, "<span class='warning'>The baton is in sleep inducement mode.</span>")
+			. += "<span class='warning'>The baton is in sleep inducement mode.</span>"
 		if(BATON_CUFF)
-			to_chat(user, "<span class='warning'>The baton is in restraining mode.</span>")
+			. += "<span class='warning'>The baton is in restraining mode.</span>"
 		if(BATON_PROBE)
-			to_chat(user, "<span class='warning'>The baton is in probing mode.</span>")
+			. += "<span class='warning'>The baton is in probing mode.</span>"
 
 /obj/item/radio/headset/abductor
 	name = "alien headset"
@@ -625,21 +625,52 @@ Congratulations! You are now trained for invasive xenobiology research!"}
 	icon_state = "abductor_headset"
 	item_state = "abductor_headset"
 	keyslot2 = new /obj/item/encryptionkey/heads/captain
+	bang_protect = 1
 
 /obj/item/radio/headset/abductor/Initialize(mapload)
 	. = ..()
 	make_syndie()
-
-/obj/item/radio/headset/abductor/ComponentInitialize()
-	. = ..()
-	AddComponent(/datum/component/wearertargeting/earprotection, list(SLOT_EARS))
 
 /obj/item/radio/headset/abductor/attackby(obj/item/W, mob/user, params)
 	if(W.tool_behaviour == TOOL_SCREWDRIVER)
 		return // Stops humans from disassembling abductor headsets.
 	return ..()
 
+/obj/item/abductor_machine_beacon
+	name = "machine beacon"
+	desc = "A beacon designed to instantly tele-construct abductor machinery."
+	icon = 'icons/obj/abductor.dmi'
+	icon_state = "beacon"
+	w_class = WEIGHT_CLASS_TINY
+	var/obj/machinery/spawned_machine
 
+/obj/item/abductor_machine_beacon/attack_self(mob/user)
+	..()
+	user.visible_message("<span class='notice'>[user] places down [src] and activates it.</span>", "<span class='notice'>You place down [src] and activate it.</span>")
+	user.dropItemToGround(src)
+	playsound(src, 'sound/machines/terminal_alert.ogg', 50)
+	addtimer(CALLBACK(src, .proc/try_spawn_machine), 30)
+
+/obj/item/abductor_machine_beacon/proc/try_spawn_machine()
+	var/viable = FALSE
+	if(isfloorturf(loc))
+		var/turf/T = loc
+		viable = TRUE
+		for(var/obj/thing in T.contents)
+			if(thing.density || ismachinery(thing) || isstructure(thing))
+				viable = FALSE
+	if(viable)
+		playsound(src, 'sound/effects/phasein.ogg', 50, TRUE)
+		var/new_machine = new spawned_machine(loc)
+		visible_message("<span class='notice'>[new_machine] warps on top of the beacon!")
+		qdel(src)
+	else
+		playsound(src, 'sound/machines/buzz-two.ogg', 50)
+
+/obj/item/abductor_machine_beacon/chem_dispenser
+	name = "beacon - Reagent Synthesizer"
+	spawned_machine = /obj/machinery/chem_dispenser/abductor
+	
 /obj/item/scalpel/alien
 	name = "alien scalpel"
 	desc = "It's a gleaming sharp knife made out of silvery-green metal."
@@ -757,7 +788,7 @@ Congratulations! You are now trained for invasive xenobiology research!"}
 	icon_state = "bed"
 	can_buckle = 1
 
-	var/static/list/injected_reagents = list("corazone")
+	var/static/list/injected_reagents = list(/datum/reagent/medicine/corazone)
 
 /obj/structure/table/optable/abductor/Crossed(atom/movable/AM)
 	. = ..()

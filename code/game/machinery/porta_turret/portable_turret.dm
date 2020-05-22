@@ -16,7 +16,7 @@
 	idle_power_usage = 50		//when inactive, this turret takes up constant 50 Equipment power
 	active_power_usage = 300	//when active, this turret takes up constant 300 Equipment power
 	req_access = list(ACCESS_SEC_DOORS)
-	power_channel = EQUIP	//drains power from the EQUIPMENT channel
+	power_channel = AREA_USAGE_EQUIP	//drains power from the EQUIPMENT channel
 
 	var/base_icon_state = "standard"
 	var/scan_range = 7
@@ -241,14 +241,14 @@
 		if(I.tool_behaviour == TOOL_CROWBAR)
 			//If the turret is destroyed, you can remove it with a crowbar to
 			//try and salvage its components
-			to_chat(user, "<span class='notice'>You begin prying the metal coverings off...</span>")
+			to_chat(user, "<span class='notice'>You begin prying the iron coverings off...</span>")
 			if(I.use_tool(src, user, 20))
 				if(prob(70))
 					if(stored_gun)
 						stored_gun.forceMove(loc)
 					to_chat(user, "<span class='notice'>You remove the turret and salvage some components.</span>")
 					if(prob(50))
-						new /obj/item/stack/sheet/metal(loc, rand(1,4))
+						new /obj/item/stack/sheet/iron(loc, rand(1,4))
 					if(prob(50))
 						new /obj/item/assembly/prox_sensor(loc)
 				else
@@ -319,9 +319,7 @@
 		on = FALSE
 		remove_control()
 
-		spawn(rand(60,600))
-			if(!on)
-				on = TRUE
+		addtimer(VARSET_CALLBACK(src, on, TRUE), rand(60,600))
 
 /obj/machinery/porta_turret/take_damage(damage, damage_type = BRUTE, damage_flag = 0, sound_effect = 1)
 	. = ..()
@@ -562,6 +560,7 @@
 	//Shooting Code:
 	A.preparePixelProjectile(target, T)
 	A.firer = src
+	A.fired_from = src
 	A.fire()
 	return A
 
@@ -676,6 +675,8 @@
 	desc = "An energy blaster auto-turret."
 
 /obj/machinery/porta_turret/syndicate/energy/heavy
+	name = "syndicate heavy laser turret"
+	desc = "A heavy laser auto-turret."
 	icon_state = "standard_lethal"
 	base_icon_state = "standard"
 	stun_projectile = /obj/item/projectile/energy/electrode
@@ -691,12 +692,16 @@
 
 
 /obj/machinery/porta_turret/syndicate/pod
+	name = "syndicate semi-auto turret"
+	desc = "A ballistic semi-automatic auto-turret."
 	integrity_failure = 20
 	max_integrity = 40
 	stun_projectile = /obj/item/projectile/bullet/syndicate_turret
 	lethal_projectile = /obj/item/projectile/bullet/syndicate_turret
 
 /obj/machinery/porta_turret/syndicate/shuttle
+	name = "syndicate penetrator turret"
+	desc = "A ballistic penetrator auto-turret."
 	scan_range = 9
 	shot_delay = 3
 	stun_projectile = /obj/item/projectile/bullet/p50/penetrator/shuttle
@@ -828,10 +833,10 @@
 		T.cp = src
 
 /obj/machinery/turretid/examine(mob/user)
-	..()
+	. += ..()
 	if(issilicon(user) && (!stat & BROKEN))
-		to_chat(user, "<span class='notice'>Ctrl-click [src] to [ enabled ? "disable" : "enable"] turrets.</span>")
-		to_chat(user, "<span class='notice'>Alt-click [src] to set turrets to [ lethal ? "stun" : "kill"].</span>")
+		. += {"<span class='notice'>Ctrl-click [src] to [ enabled ? "disable" : "enable"] turrets.</span>
+					<span class='notice'>Alt-click [src] to set turrets to [ lethal ? "stun" : "kill"].</span>"}
 
 /obj/machinery/turretid/attackby(obj/item/I, mob/user, params)
 	if(stat & BROKEN)
@@ -957,7 +962,7 @@
 	desc = "Used for building turret control panels."
 	icon_state = "apc"
 	result_path = /obj/machinery/turretid
-	materials = list(MAT_METAL=MINERAL_MATERIAL_AMOUNT)
+	materials = list(/datum/material/iron=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/gun/proc/get_turret_properties()
 	. = list()
@@ -1078,10 +1083,8 @@
 		if(team_color == "blue")
 			if(istype(P, /obj/item/projectile/beam/lasertag/redtag))
 				on = FALSE
-				spawn(100)
-					on = TRUE
+				addtimer(VARSET_CALLBACK(src, on, TRUE), 10 SECONDS)
 		else if(team_color == "red")
 			if(istype(P, /obj/item/projectile/beam/lasertag/bluetag))
 				on = FALSE
-				spawn(100)
-					on = TRUE
+				addtimer(VARSET_CALLBACK(src, on, TRUE), 10 SECONDS)

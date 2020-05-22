@@ -63,34 +63,34 @@
 	if(severity != 1 && shielded && target != src)
 		return
 	if(target == src)
-		ScrapeAway()
+		ScrapeAway(flags = CHANGETURF_INHERIT_AIR)
 		return
 	if(target != null)
 		severity = 3
 
 	switch(severity)
 		if(1)
-			ScrapeAway(2)
+			ScrapeAway(2, flags = CHANGETURF_INHERIT_AIR)
 		if(2)
 			switch(pick(1,2;75,3))
 				if(1)
 					if(!length(baseturfs) || !ispath(baseturfs[baseturfs.len-1], /turf/open/floor))
-						ScrapeAway()
+						ScrapeAway(flags = CHANGETURF_INHERIT_AIR)
 						ReplaceWithLattice()
 					else
-						ScrapeAway(2)
+						ScrapeAway(2, flags = CHANGETURF_INHERIT_AIR)
 					if(prob(33))
-						new /obj/item/stack/sheet/metal(src)
+						new /obj/item/stack/sheet/iron(src)
 				if(2)
-					ScrapeAway(2)
+					ScrapeAway(2, flags = CHANGETURF_INHERIT_AIR)
 				if(3)
 					if(prob(80))
-						ScrapeAway()
+						ScrapeAway(flags = CHANGETURF_INHERIT_AIR)
 					else
 						break_tile()
 					hotspot_expose(1000,CELL_VOLUME)
 					if(prob(33))
-						new /obj/item/stack/sheet/metal(src)
+						new /obj/item/stack/sheet/iron(src)
 		if(3)
 			if (prob(50))
 				src.break_tile()
@@ -104,9 +104,9 @@
 /turf/open/floor/blob_act(obj/structure/blob/B)
 	return
 
-/turf/open/floor/proc/update_icon()
+/turf/open/floor/update_icon()
+	. = ..()
 	update_visuals()
-	return 1
 
 /turf/open/floor/attack_paw(mob/user)
 	return attack_hand(user)
@@ -136,7 +136,7 @@
 	burnt = 1
 
 /turf/open/floor/proc/make_plating()
-	return ScrapeAway()
+	return ScrapeAway(flags = CHANGETURF_INHERIT_AIR)
 
 /turf/open/floor/ChangeTurf(path, new_baseturf, flags)
 	if(!isfloorturf(src))
@@ -214,20 +214,22 @@
 /turf/open/floor/narsie_act(force, ignore_mobs, probability = 20)
 	. = ..()
 	if(.)
-		ChangeTurf(/turf/open/floor/engine/cult)
+		ChangeTurf(/turf/open/floor/engine/cult, flags = CHANGETURF_INHERIT_AIR)
 
 /turf/open/floor/ratvar_act(force, ignore_mobs)
 	. = ..()
 	if(.)
-		ChangeTurf(/turf/open/floor/clockwork)
+		ChangeTurf(/turf/open/floor/clockwork, flags = CHANGETURF_INHERIT_AIR)
 
 /turf/open/floor/acid_melt()
-	ScrapeAway()
+	ScrapeAway(flags = CHANGETURF_INHERIT_AIR)
 
 /turf/open/floor/rcd_vals(mob/user, obj/item/construction/rcd/the_rcd)
 	switch(the_rcd.mode)
 		if(RCD_FLOORWALL)
 			return list("mode" = RCD_FLOORWALL, "delay" = 20, "cost" = 16)
+		if(RCD_LADDER)
+			return list("mode" = RCD_LADDER, "delay" = 25, "cost" = 16)
 		if(RCD_AIRLOCK)
 			if(the_rcd.airlock_glass)
 				return list("mode" = RCD_AIRLOCK, "delay" = 50, "cost" = 20)
@@ -249,6 +251,11 @@
 			to_chat(user, "<span class='notice'>You build a wall.</span>")
 			PlaceOnTop(/turf/closed/wall)
 			return TRUE
+		if(RCD_LADDER)
+			to_chat(user, "<span class='notice'>You build a ladder.</span>")
+			var/obj/structure/ladder/L = new(src)
+			L.anchored = TRUE
+			return TRUE
 		if(RCD_AIRLOCK)
 			if(locate(/obj/machinery/door/airlock) in src)
 				return FALSE
@@ -268,7 +275,7 @@
 			A.autoclose = TRUE
 			return TRUE
 		if(RCD_DECONSTRUCT)
-			if(ScrapeAway() == src)
+			if(ScrapeAway(flags = CHANGETURF_INHERIT_AIR) == src)
 				return FALSE
 			to_chat(user, "<span class='notice'>You deconstruct [src].</span>")
 			return TRUE

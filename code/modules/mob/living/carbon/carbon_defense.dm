@@ -24,6 +24,17 @@
 
 /mob/living/carbon/get_ear_protection()
 	var/number = ..()
+	if(istype(src.head, /obj/item/clothing/head))			//are they wearing something on their head
+		var/obj/item/clothing/head/HHP = src.head			//if yes gets the flash protection value from that item
+		number += HHP.bang_protect
+
+	if(istype(src.ears, /obj/item/radio/headset))		//headset
+		var/obj/item/radio/headset/RHP = src.ears
+		number += RHP.bang_protect
+
+	if(istype(src.ears, /obj/item/clothing/ears))		//ear slot. This is different from headset because headset is a subtype of radio
+		var/obj/item/clothing/ears/EHP = src.ears
+		number += EHP.bang_protect
 	var/obj/item/organ/ears/E = getorganslot(ORGAN_SLOT_EARS)
 	if(!E)
 		number = INFINITY
@@ -42,6 +53,11 @@
 		return wear_mask
 	if(check_glasses && glasses && (glasses.flags_cover & GLASSESCOVERSEYES))
 		return glasses
+/mob/living/carbon/is_pepper_proof(check_head = TRUE, check_mask = TRUE)
+	if(check_head &&(head?.flags_cover & PEPPERPROOF))
+		return head
+	if(check_mask &&(wear_mask?.flags_cover & PEPPERPROOF))
+		return wear_mask
 
 /mob/living/carbon/check_projectile_dismemberment(obj/item/projectile/P, def_zone)
 	var/obj/item/bodypart/affecting = get_bodypart(def_zone)
@@ -68,7 +84,8 @@
 				if(isturf(I.loc))
 					I.attack_hand(src)
 					if(get_active_held_item() == I) //if our attack_hand() picks up the item...
-						visible_message("<span class='warning'>[src] catches [I]!</span>") //catch that sucker!
+						visible_message("<span class='warning'>[src] catches [I]!</span>", \
+										"<span class='userdanger'>You catch [I] in mid-air!</span>")
 						throw_mode_off()
 						return 1
 	..()
@@ -76,10 +93,7 @@
 
 /mob/living/carbon/attacked_by(obj/item/I, mob/living/user)
 	var/obj/item/bodypart/affecting
-	if(user == src)
-		affecting = get_bodypart(check_zone(user.zone_selected)) //we're self-mutilating! yay!
-	else
-		affecting = get_bodypart(ran_zone(user.zone_selected))
+	affecting = get_bodypart(check_zone(user.zone_selected))
 	if(!affecting) //missing limb? we select the first bodypart (you can never have zero, because of chest)
 		affecting = bodyparts[1]
 	SEND_SIGNAL(I, COMSIG_ITEM_ATTACK_ZONE, src, user, affecting)
@@ -87,7 +101,7 @@
 	if(I.force)
 		apply_damage(I.force, I.damtype, affecting)
 		if(I.damtype == BRUTE && affecting.status == BODYPART_ORGANIC)
-			if(prob(33))
+			if(I.sharpness || I.force >= 10)
 				I.add_mob_blood(src)
 				var/turf/location = get_turf(src)
 				add_splatter_floor(location)
@@ -108,8 +122,14 @@
 						update_inv_head()
 
 		//dismemberment
-		var/probability = I.get_dismemberment_chance(affecting)
-		if(prob(probability))
+		var/dismemberthreshold = (((affecting.max_damage * 2) / I.sharpness) - (affecting.get_damage() + ((I.w_class - 3) * 10) + ((I.attack_weight - 1) * 15)))
+		if(HAS_TRAIT(src, TRAIT_EASYDISMEMBER))
+			dismemberthreshold -= 50
+		if(I.sharpness)
+			dismemberthreshold = min(((affecting.max_damage * 2) - affecting.get_damage()), dismemberthreshold) //makes it so limbs wont become immune to being dismembered if the item is sharp
+			if(stat == DEAD)
+				dismemberthreshold = dismemberthreshold / 3 
+		if(I.force >= dismemberthreshold && I.force >= 10)
 			if(affecting.dismember(I.damtype))
 				I.add_mob_blood(src)
 				playsound(get_turf(src), I.get_dismember_sound(), 80, 1)
@@ -173,7 +193,7 @@
 					M.powerlevel = 0
 
 				visible_message("<span class='danger'>The [M.name] has shocked [src]!</span>", \
-				"<span class='userdanger'>The [M.name] has shocked [src]!</span>")
+				"<span class='userdanger'>The [M.name] has shocked you!</span>")
 
 				do_sparks(5, TRUE, src)
 				var/power = M.powerlevel + rand(0,3)
@@ -229,11 +249,11 @@
 	if(HAS_TRAIT(src, TRAIT_SHOCKIMMUNE))
 		return FALSE
 	shock_damage *= siemens_coeff
-	if(dna && dna.species)
+	if(dna?.species)
 		shock_damage *= dna.species.siemens_coeff
 	if(shock_damage<1 && !override)
 		return 0
-	if(reagents.has_reagent("teslium"))
+	if(reagents.has_reagent(/datum/reagent/teslium))
 		shock_damage *= 1.5 //If the mob has teslium in their body, shocks are 50% more damaging!
 	if(illusion)
 		adjustStaminaLoss(shock_damage)
@@ -275,18 +295,29 @@
 			return
 		M.visible_message("<span class='notice'>[M] shakes [src] trying to get [p_them()] up!</span>", \
 						"<span class='notice'>You shake [src] trying to get [p_them()] up!</span>")
-	else
+	else if(M.zone_selected == BODY_ZONE_CHEST)
 		M.visible_message("<span class='notice'>[M] hugs [src] to make [p_them()] feel better!</span>", \
 					"<span class='notice'>You hug [src] to make [p_them()] feel better!</span>")
 		SEND_SIGNAL(src, COMSIG_ADD_MOOD_EVENT, "hug", /datum/mood_event/hug)
 		if(HAS_TRAIT(M, TRAIT_FRIENDLY))
-			GET_COMPONENT_FROM(mood, /datum/component/mood, M)
+			var/datum/component/mood/mood = M.GetComponent(/datum/component/mood)
 			if (mood.sanity >= SANITY_GREAT)
 				SEND_SIGNAL(src, COMSIG_ADD_MOOD_EVENT, "friendly_hug", /datum/mood_event/besthug, M)
 			else if (mood.sanity >= SANITY_DISTURBED)
 				SEND_SIGNAL(src, COMSIG_ADD_MOOD_EVENT, "friendly_hug", /datum/mood_event/betterhug, M)
 		for(var/datum/brain_trauma/trauma in M.get_traumas())
 			trauma.on_hug(M, src)
+	else if(M.zone_selected == BODY_ZONE_HEAD)
+		M.visible_message("<span class='notice'>[M] pats [src] on the head.</span>", \
+					"<span class='notice'>You pat [src] on the head.</span>")
+	else if((M.zone_selected == BODY_ZONE_L_ARM) || (M.zone_selected == BODY_ZONE_R_ARM))
+		if(!get_bodypart(check_zone(M.zone_selected)))
+			to_chat(M, "<span class='warning'>[src] does not have a [M.zone_selected == BODY_ZONE_L_ARM ? "left" : "right"] arm!</span>")
+		else
+			M.visible_message("<span class='notice'>[M] shakes [src]'s hand.</span>", \
+						"<span class='notice'>You shake [src]'s hand.</span>")
+	else if(M.zone_selected == BODY_ZONE_PRECISE_GROIN)
+		to_chat(M, "<span class='warning'>ERP is not allowed on this server!</span>")
 	AdjustStun(-60)
 	AdjustKnockdown(-60)
 	AdjustUnconscious(-60)
@@ -315,30 +346,30 @@
 		if (damage == 1)
 			to_chat(src, "<span class='warning'>Your eyes sting a little.</span>")
 			if(prob(40))
-				adjust_eye_damage(1)
+				eyes.applyOrganDamage(1)
 
 		else if (damage == 2)
 			to_chat(src, "<span class='warning'>Your eyes burn.</span>")
-			adjust_eye_damage(rand(2, 4))
+			eyes.applyOrganDamage(rand(2, 4))
 
 		else if( damage >= 3)
 			to_chat(src, "<span class='warning'>Your eyes itch and burn severely!</span>")
-			adjust_eye_damage(rand(12, 16))
+			eyes.applyOrganDamage(rand(12, 16))
 
-		if(eyes.eye_damage > 10)
+		if(eyes.damage > 10)
 			blind_eyes(damage)
 			blur_eyes(damage * rand(3, 6))
 
-			if(eyes.eye_damage > 20)
-				if(prob(eyes.eye_damage - 20))
+			if(eyes.damage > 20)
+				if(prob(eyes.damage - 20))
 					if(!HAS_TRAIT(src, TRAIT_NEARSIGHT))
 						to_chat(src, "<span class='warning'>Your eyes start to burn badly!</span>")
 					become_nearsighted(EYE_DAMAGE)
 
-				else if(prob(eyes.eye_damage - 25))
+				else if(prob(eyes.damage - 25))
 					if(!HAS_TRAIT(src, TRAIT_BLIND))
 						to_chat(src, "<span class='warning'>You can't see anything!</span>")
-					become_blind(EYE_DAMAGE)
+					eyes.applyOrganDamage(eyes.maxHealth)
 
 			else
 				to_chat(src, "<span class='warning'>Your eyes are really starting to hurt. This can't be good for you!</span>")
@@ -368,13 +399,13 @@
 			var/deaf = deafen_pwr * effect_amount
 			adjustEarDamage(ear_damage,deaf)
 
-			if(ears.ear_damage >= 15)
+			if(ears.damage >= 15)
 				to_chat(src, "<span class='warning'>Your ears start to ring badly!</span>")
-				if(prob(ears.ear_damage - 5))
+				if(prob(ears.damage - 5))
 					to_chat(src, "<span class='userdanger'>You can't hear anything!</span>")
-					ears.ear_damage = min(ears.ear_damage, UNHEALING_EAR_DAMAGE)
+					ears.damage = min(ears.damage, ears.maxHealth)
 					// you need earmuffs, inacusiate, or replacement
-			else if(ears.ear_damage >= 5)
+			else if(ears.damage >= 5)
 				to_chat(src, "<span class='warning'>Your ears start to ring!</span>")
 			SEND_SOUND(src, sound('sound/weapons/flash_ring.ogg',0,1,0,250))
 		return effect_amount //how soundbanged we are

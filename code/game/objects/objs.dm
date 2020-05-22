@@ -1,22 +1,31 @@
 
 /obj
-	animate_movement = 2
+	animate_movement = SLIDE_STEPS
+	speech_span = SPAN_ROBOT
 	var/obj_flags = CAN_BE_HIT
-	var/set_obj_flags // ONLY FOR MAPPING: Sets flags from a string list, handled in Initialize. Usage: set_obj_flags = "EMAGGED;!CAN_BE_HIT" to set EMAGGED and clear CAN_BE_HIT.
+
+	/// ONLY FOR MAPPING: Sets flags from a string list, handled in Initialize. Usage: set_obj_flags = "EMAGGED;!CAN_BE_HIT" to set EMAGGED and clear CAN_BE_HIT.
+	var/set_obj_flags
 
 	var/damtype = BRUTE
 	var/force = 0
 
 	var/datum/armor/armor
-	var/obj_integrity	//defaults to max_integrity
+	/// The integrity the object starts at. Defaults to max_integrity.
+	var/obj_integrity
+	/// The maximum integrity the object can have.
 	var/max_integrity = 500
-	var/integrity_failure = 0 //0 if we have no special broken behavior
+	/// The object will break once obj_integrity reaches this amount in take_damage(). 0 if we have no special broken behavior.
+	var/integrity_failure = 0
 
-	var/resistance_flags = NONE // INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | ON_FIRE | UNACIDABLE | ACID_PROOF
+	/// INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | ON_FIRE | UNACIDABLE | ACID_PROOF
+	var/resistance_flags = NONE
 
-	var/acid_level = 0 //how much acid is on that obj
+	/// How much acid is on that obj
+	var/acid_level = 0
 
-	var/persistence_replacement //have something WAY too amazing to live to the next round? Set a new path here. Overuse of this var will make me upset.
+	/// Have something WAY too amazing to live to the next round? Set a new path here. Overuse of this var will make me upset. Will replace the object with the type you specify during persistence.
+	var/persistence_replacement
 	var/current_skin //Has the item been reskinned?
 	var/list/unique_reskin //List of options to reskin.
 
@@ -26,7 +35,10 @@
 	var/list/req_one_access
 	var/req_one_access_txt = "0"
 
-	var/renamedByPlayer = FALSE //set when a player uses a pen on a renamable object
+	/// Set when a player uses a pen on a renamable object
+	var/renamedByPlayer = FALSE
+
+	var/drag_slowdown // Amont of multiplicative slowdown applied if pulled. >1 makes you slower, <1 makes you faster.
 
 /obj/vv_edit_var(vname, vval)
 	switch(vname)
@@ -170,9 +182,6 @@
 /obj/proc/container_resist(mob/living/user)
 	return
 
-/obj/proc/update_icon()
-	return
-
 /mob/proc/unset_machine()
 	if(machine)
 		machine.on_unset_machine(src)
@@ -202,9 +211,6 @@
 	if(!anchored || current_size >= STAGE_FIVE)
 		step_towards(src,S)
 
-/obj/get_spans()
-	return ..() | SPAN_ROBOT
-
 /obj/get_dumping_location(datum/component/storage/source,mob/user)
 	return get_turf(src)
 
@@ -221,11 +227,11 @@
 	.["Modify armor values"] = "?_src_=vars;[HrefToken()];modarmor=[REF(src)]"
 
 /obj/examine(mob/user)
-	..()
+	. = ..()
 	if(obj_flags & UNIQUE_RENAME)
-		to_chat(user, "<span class='notice'>Use a pen on it to rename it or change its description.</span>")
+		. += "<span class='notice'>Use a pen on it to rename it or change its description.</span>"
 	if(unique_reskin && !current_skin)
-		to_chat(user, "<span class='notice'>Alt-click it to reskin it.</span>")
+		. += "<span class='notice'>Alt-click it to reskin it.</span>"
 
 /obj/AltClick(mob/user)
 	. = ..()
@@ -252,3 +258,36 @@
 	if(atmosanalyzer_scan(user, src))
 		return TRUE
 	return ..()
+
+/obj/proc/plunger_act(obj/item/plunger/P, mob/living/user, reinforced)
+	return
+
+//For returning special data when the object is saved
+//For example, or silos will return a list of their materials which will be dumped on top of them
+//Can be customised if you have something that contains something you want saved
+//If you put an incorrect format it will break outputting, so don't use this if you don't know what you are doing
+//NOTE: Contents is automatically saved, so if you store your things in the contents var, don't worry about this
+//====Output Format Examples====:
+//===Single Object===
+//	"/obj/item/folder/blue"
+//===Multiple Objects===
+//	"/obj/item/folder/blue,\n
+//	/obj/item/folder/red"
+//===Single Object with metadata===
+//	"/obj/item/folder/blue{\n
+//	\tdir = 8;\n
+//	\tname = "special folder"\n
+//	\t}"
+//===Multiple Objects with metadata===
+//	"/obj/item/folder/blue{\n
+//	\tdir = 8;\n
+//	\tname = "special folder"\n
+//	\t},\n
+//	/obj/item/folder/red"
+//====How to save easily====:
+//	return "[thing.type][generate_tgm_metadata(thing)]"
+//Where thing is the additional thing you want to same (For example ores inside an ORM)
+//Just add ,\n between each thing
+//generate_tgm_metadata(thing) handles everything inside the {} for you
+/obj/proc/on_object_saved(var/depth = 0)
+	return ""

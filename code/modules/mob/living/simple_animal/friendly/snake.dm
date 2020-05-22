@@ -1,6 +1,6 @@
 /mob/living/simple_animal/hostile/retaliate/poison
     var/poison_per_bite = 0
-    var/poison_type = "toxin"
+    var/poison_type = /datum/reagent/toxin
 
 /mob/living/simple_animal/hostile/retaliate/poison/AttackingTarget()
     . = ..()
@@ -34,6 +34,7 @@
         gold_core_spawnable = FRIENDLY_SPAWN
         obj_damage = 0
         environment_smash = ENVIRONMENT_SMASH_NONE
+        mobsay_color = "#26F55A"
 
 
 /mob/living/simple_animal/hostile/retaliate/poison/snake/ListTargets(atom/the_target)

@@ -1,3 +1,4 @@
+
 #define CART_SECURITY			(1<<0)
 #define CART_ENGINE				(1<<1)
 #define CART_ATMOS				(1<<2)
@@ -82,7 +83,7 @@
 /obj/item/cartridge/security
 	name = "\improper R.O.B.U.S.T. cartridge"
 	icon_state = "cart-s"
-	access = CART_SECURITY
+	access = CART_SECURITY | CART_MANIFEST
 	bot_access_flags = SEC_BOT
 
 /obj/item/cartridge/detective
@@ -230,14 +231,8 @@ Code:
 <a href='byond://?src=[REF(src)];choice=Signal Code;scode=1'>+</a>
 <a href='byond://?src=[REF(src)];choice=Signal Code;scode=5'>+</a><br>"}
 		if (41) //crew manifest
-
 			menu = "<h4>[PDAIMG(notes)] Crew Manifest</h4>"
-			menu += "Entries cannot be modified from this terminal.<br><br>"
-			if(GLOB.data_core.general)
-				for (var/datum/data/record/t in sortRecord(GLOB.data_core.general))
-					menu += "[t.fields["name"]] - [t.fields["rank"]]<br>"
-			menu += "<br>"
-
+			menu += "<center>[GLOB.data_core.get_manifest_html(monochrome=TRUE)]</center>"
 
 		if (42) //status displays
 			menu = "<h4>[PDAIMG(status)] Station Status Display Interlink</h4>"
@@ -559,6 +554,22 @@ Code:
 		if (54) // Beepsky, Medibot, Floorbot, and Cleanbot access
 			menu = "<h4>[PDAIMG(medbot)] Bots Interlink</h4>"
 			bot_control()
+		if (55) // Emoji Guidebook for mimes
+			menu = "<h4>[PDAIMG(emoji)] Emoji Guidebook</h4>"
+			var/static/list/emoji_icon_states
+			var/static/emoji_table
+			if(!emoji_table)
+				var/datum/asset/spritesheet/sheet = get_asset_datum(/datum/asset/spritesheet/goonchat)
+				var/list/collate = list("<br><table>")
+				for(var/emoji in sortList(icon_states(icon('icons/emoji.dmi'))))
+					var/tag = sheet.icon_tag("emoji-[emoji]")
+					collate += "<tr><td>[emoji]</td><td>[tag]</td></tr>"
+				collate += "</table><br>"
+				emoji_table = collate.Join()
+
+			menu += "<br> To use an emoji in a pda message, refer to the guide and add \":\" around the emoji. Your PDA supports the following emoji:<br>"
+			menu += emoji_table
+
 		if (99) //Newscaster message permission error
 			menu = "<h5> ERROR : NOT AUTHORIZED [host_pda.id ? "" : "- ID SLOT EMPTY"] </h5>"
 
@@ -647,6 +658,11 @@ Code:
 			host_pda.Topic(null,list("choice"=num2text(host_pda.mode)))
 			return
 
+	//emoji previews
+	if(href_list["emoji"])
+		var/parse = emoji_parse(":[href_list["emoji"]]:")
+		to_chat(usr, parse)
+
 	//Bot control section! Viciously ripped from radios for being laggy and terrible.
 	if(href_list["op"])
 		switch(href_list["op"])
@@ -657,14 +673,14 @@ Code:
 			if("botlist")
 				active_bot = null
 			if("summon") //Args are in the correct order, they are stated here just as an easy reminder.
-				active_bot.bot_control(command= "summon", user_turf= get_turf(usr), user_access= host_pda.GetAccess())
+				active_bot.bot_control("summon", usr, host_pda.GetAccess())
 			else //Forward all other bot commands to the bot itself!
-				active_bot.bot_control(command= href_list["op"], user= usr)
+				active_bot.bot_control(href_list["op"], usr)
 
 	if(href_list["mule"]) //MULEbots are special snowflakes, and need different args due to how they work.
 		var/mob/living/simple_animal/bot/mulebot/mule = active_bot
 		if (istype(mule))
-			mule.bot_control(command=href_list["mule"], user=usr, pda=TRUE)
+			mule.bot_control(href_list["mule"], usr, pda=TRUE)
 
 	if(!host_pda)
 		return
@@ -679,7 +695,7 @@ Code:
 		menu += "Mode: [active_bot.get_mode()]"
 		if(active_bot.allow_pai)
 			menu += "<BR>pAI: "
-			if(active_bot.paicard && active_bot.paicard.pai)
+			if(active_bot.paicard?.pai)
 				menu += "[active_bot.paicard.pai.name]"
 				if(active_bot.bot_core.allowed(usr))
 					menu += " (<A href='byond://?src=[REF(src)];op=ejectpai'><i>eject</i></A>)"

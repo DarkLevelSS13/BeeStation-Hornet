@@ -58,7 +58,7 @@
 	medical_record_text = "Patient has a tumor in their brain that is slowly driving them to brain death."
 
 /datum/quirk/brainproblems/on_process()
-	quirk_holder.adjustBrainLoss(0.2)
+	quirk_holder.adjustOrganLoss(ORGAN_SLOT_BRAIN, 0.2)
 
 /datum/quirk/deafness
 	name = "Deaf"
@@ -109,13 +109,19 @@
 			if("Cook")
 				heirloom_type = pick(/obj/item/reagent_containers/food/condiment/saltshaker, /obj/item/kitchen/rollingpin, /obj/item/clothing/head/chefhat)
 			if("Botanist")
-				heirloom_type = pick(/obj/item/cultivator, /obj/item/reagent_containers/glass/bucket, /obj/item/storage/bag/plants)
+				heirloom_type = pick(/obj/item/cultivator, /obj/item/reagent_containers/glass/bucket, /obj/item/storage/bag/plants, /obj/item/toy/plush/beeplushie)
 			if("Bartender")
 				heirloom_type = pick(/obj/item/reagent_containers/glass/rag, /obj/item/clothing/head/that, /obj/item/reagent_containers/food/drinks/shaker)
 			if("Curator")
 				heirloom_type = pick(/obj/item/pen/fountain, /obj/item/storage/pill_bottle/dice)
+			if("Chaplain")
+				heirloom_type = pick(/obj/item/toy/windupToolbox, /obj/item/reagent_containers/food/drinks/bottle/holywater)
 			if("Assistant")
 				heirloom_type = /obj/item/storage/toolbox/mechanical/old/heirloom
+			if("Barber")
+				heirloom_type = /obj/item/handmirror
+			if("Stage Magician")
+				heirloom_type = /obj/item/gun/magic/wand
 			//Security/Command
 			if("Captain")
 				heirloom_type = /obj/item/reagent_containers/food/drinks/flask/gold
@@ -129,6 +135,8 @@
 				heirloom_type = /obj/item/reagent_containers/food/drinks/bottle/whiskey
 			if("Lawyer")
 				heirloom_type = pick(/obj/item/gavelhammer, /obj/item/book/manual/wiki/security_space_law)
+			if("Brig Physician")
+				heirloom_type = pick(/obj/item/clothing/neck/stethoscope, /obj/item/book/manual/wiki/security_space_law)
 			//RnD
 			if("Research Director")
 				heirloom_type = /obj/item/toy/plush/slimeplushie
@@ -141,10 +149,14 @@
 				heirloom_type = pick(/obj/item/clothing/neck/stethoscope, /obj/item/bodybag)
 			if("Medical Doctor")
 				heirloom_type = pick(/obj/item/clothing/neck/stethoscope, /obj/item/bodybag)
+			if("Paramedic")
+				heirloom_type = pick(/obj/item/bodybag)
 			if("Chemist")
 				heirloom_type = /obj/item/book/manual/wiki/chemistry
 			if("Virologist")
-				heirloom_type = /obj/item/reagent_containers/syringe
+				heirloom_type = /obj/item/reagent_containers/dropper
+			if("Geneticist")
+				heirloom_type = /obj/item/clothing/under/shorts/purple
 			//Engineering
 			if("Chief Engineer")
 				heirloom_type = pick(/obj/item/clothing/head/hardhat/white, /obj/item/screwdriver, /obj/item/wrench, /obj/item/weldingtool, /obj/item/crowbar, /obj/item/wirecutters)
@@ -199,6 +211,15 @@
 /datum/quirk/family_heirloom/on_clone(data)
 	heirloom = data
 
+/datum/quirk/frail
+	name = "Frail"
+	desc = "Your bones might as well be made of glass! Your limbs can take less damage before they become disabled."
+	value = -2
+	mob_trait = TRAIT_EASYLIMBDISABLE
+	gain_text = "<span class='danger'>You feel frail.</span>"
+	lose_text = "<span class='notice'>You feel sturdy again.</span>"
+	medical_record_text = "Patient has unusually frail bones, recommend calcium-rich diet."
+
 /datum/quirk/heavy_sleeper
 	name = "Heavy Sleeper"
 	desc = "You sleep like a rock! Whenever you're put to sleep or knocked unconscious, you take a little bit longer to wake up."
@@ -216,13 +237,13 @@
 	lose_text = "<span class='notice'>You don't seem to make a big deal out of everything anymore.</span>"
 
 /datum/quirk/hypersensitive/add()
-	GET_COMPONENT_FROM(mood, /datum/component/mood, quirk_holder)
+	var/datum/component/mood/mood = quirk_holder.GetComponent(/datum/component/mood)
 	if(mood)
 		mood.mood_modifier += 0.5
 
 /datum/quirk/hypersensitive/remove()
 	if(quirk_holder)
-		GET_COMPONENT_FROM(mood, /datum/component/mood, quirk_holder)
+		var/datum/component/mood/mood = quirk_holder.GetComponent(/datum/component/mood)
 		if(mood)
 			mood.mood_modifier -= 0.5
 
@@ -360,6 +381,15 @@
 	to_chat(quirk_holder, "<span class='boldannounce'>Your [slot_string] has been replaced with a surplus prosthetic. It is fragile and will easily come apart under duress. Additionally, \
 	you need to use a welding tool and cables to repair it, instead of bruise packs and ointment.</span>")
 
+/datum/quirk/pushover
+	name = "Pushover"
+	desc = "Your first instinct is always to let people push you around. Resisting out of grabs will take conscious effort."
+	value = -2
+	mob_trait = TRAIT_GRABWEAKNESS
+	gain_text = "<span class='danger'>You feel like a pushover.</span>"
+	lose_text = "<span class='notice'>You feel like standing up for yourself.</span>"
+	medical_record_text = "Patient presents a notably unassertive personality and is easy to manipulate."
+
 /datum/quirk/insanity
 	name = "Reality Dissociation Syndrome"
 	desc = "You suffer from a severe disorder that causes very vivid hallucinations. Mindbreaker toxin can suppress its effects, and you are immune to mindbreaker's hallucinogenic properties. <b>This is not a license to grief.</b>"
@@ -370,7 +400,7 @@
 	medical_record_text = "Patient suffers from acute Reality Dissociation Syndrome and experiences vivid hallucinations."
 
 /datum/quirk/insanity/on_process()
-	if(quirk_holder.reagents.has_reagent("mindbreaker"))
+	if(quirk_holder.reagents.has_reagent(/datum/reagent/toxin/mindbreaker, needs_metabolizing = TRUE))
 		quirk_holder.hallucination = 0
 		return
 	if(prob(2)) //we'll all be mad soon enough
@@ -384,14 +414,6 @@
 		return
 	to_chat(quirk_holder, "<span class='big bold info'>Please note that your dissociation syndrome does NOT give you the right to attack people or otherwise cause any interference to \
 	the round. You are not an antagonist, and the rules will treat you the same as other crewmembers.</span>")
-
-/datum/quirk/obstructive
-	name = "Physically Obstructive"
-	desc = "You somehow manage to always be in the way. You can't swap places with other people."
-	value = -1
-	mob_trait = TRAIT_NOMOBSWAP
-	gain_text = "<span class='danger'>You feel like you're in the way.</span>"
-	lose_text = "<span class='notice'>You feel less like you're in the way.</span>"
 
 /datum/quirk/social_anxiety
 	name = "Social Anxiety"
@@ -427,7 +449,7 @@
 	gain_text = "<span class='danger'>You suddenly feel the craving for drugs.</span>"
 	lose_text = "<span class='notice'>You feel like you should kick your drug habit.</span>"
 	medical_record_text = "Patient has a history of hard drugs."
-	var/drug_list = list("crank", "krokodil", "morphine", "happiness", "methamphetamine") //List of possible IDs
+	var/drug_list = list(/datum/reagent/drug/crank, /datum/reagent/drug/krokodil, /datum/reagent/medicine/morphine, /datum/reagent/drug/happiness, /datum/reagent/drug/methamphetamine) //List of possible IDs
 	var/reagent_id //ID picked from list
 	var/datum/reagent/reagent_type //If this is defined, reagent_id will be unused and the defined reagent type will be instead.
 	var/datum/reagent/reagent_instance

@@ -153,6 +153,15 @@
 	Station Airlocks Mineral
 */
 
+/obj/machinery/door/airlock/copper
+	name = "copper airlock"
+	icon = 'icons/obj/doors/airlocks/station/copper.dmi'
+	assemblytype = /obj/structure/door_assembly/door_assembly_copper
+
+/obj/machinery/door/airlock/copper/glass
+	opacity = 0
+	glass = TRUE
+
 /obj/machinery/door/airlock/gold
 	name = "gold airlock"
 	icon = 'icons/obj/doors/airlocks/station/gold.dmi'
@@ -325,6 +334,13 @@
 	overlays_file = 'icons/obj/doors/airlocks/external/overlays.dmi'
 	note_overlay_file = 'icons/obj/doors/airlocks/external/overlays.dmi'
 	assemblytype = /obj/structure/door_assembly/door_assembly_ext
+
+/obj/machinery/door/airlock/arrivals_external
+	name = "arrivals airlock"
+	icon = 'icons/obj/doors/airlocks/external/arrivals_external.dmi'
+	overlays_file = 'icons/obj/doors/airlocks/external/overlays.dmi'
+	note_overlay_file = 'icons/obj/doors/airlocks/external/overlays.dmi'
+	protected_door = TRUE
 
 /obj/machinery/door/airlock/external/glass
 	opacity = 0
@@ -555,31 +571,23 @@
 	. = ..()
 	new /obj/effect/temp_visual/ratvar/door(loc)
 	new /obj/effect/temp_visual/ratvar/beam/door(loc)
-	change_construction_value(5)
 
 /obj/machinery/door/airlock/clockwork/Destroy()
-	change_construction_value(-5)
 	return ..()
 
 /obj/machinery/door/airlock/clockwork/examine(mob/user)
-	..()
+	. = ..()
 	var/gear_text = "The cogwheel is flickering and twisting wildly. Report this to a coder."
 	switch(construction_state)
 		if(GEAR_SECURE)
 			gear_text = "<span class='brass'>The cogwheel is solidly <b>wrenched</b> to the brass around it.</span>"
 		if(GEAR_LOOSE)
 			gear_text = "<span class='alloy'>The cogwheel has been <i>loosened</i>, but remains <b>connected loosely</b> to the door!</span>"
-	to_chat(user, gear_text)
+	. += gear_text
 
 /obj/machinery/door/airlock/clockwork/emp_act(severity)
 	if(prob(80/severity))
 		open()
-
-/obj/machinery/door/airlock/clockwork/canAIControl(mob/user)
-	return (is_servant_of_ratvar(user) && !isAllPowerCut())
-
-/obj/machinery/door/airlock/clockwork/ratvar_act()
-	return 0
 
 /obj/machinery/door/airlock/clockwork/narsie_act()
 	..()
@@ -594,8 +602,6 @@
 		return ..()
 
 /obj/machinery/door/airlock/clockwork/allowed(mob/M)
-	if(is_servant_of_ratvar(M))
-		return 1
 	return 0
 
 /obj/machinery/door/airlock/clockwork/hasPower()

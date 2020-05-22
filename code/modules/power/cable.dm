@@ -9,6 +9,7 @@ GLOBAL_LIST_INIT(cable_colors, list(
 	"red" = "#ff0000"
 	))
 
+
 ///////////////////////////////
 //CABLE STRUCTURE
 ///////////////////////////////
@@ -46,6 +47,12 @@ By design, d1 is the smallest direction and d2 is the highest
 	var/d2 = 1   // cable direction 2 (see above)
 	var/datum/powernet/powernet
 	var/obj/item/stack/cable_coil/stored
+
+	FASTDMM_PROP(\
+		pipe_type = PIPE_TYPE_CABLE,\
+		pipe_interference_group = list("cable"),\
+		pipe_group = "cable-[cable_color]"\
+	)
 
 	var/cable_color = "red"
 	color = "#ff0000"
@@ -226,9 +233,9 @@ By design, d1 is the smallest direction and d2 is the highest
 	else
 		return 0
 
-/obj/structure/cable/proc/avail()
+/obj/structure/cable/proc/avail(amount)
 	if(powernet)
-		return powernet.avail
+		return amount ? powernet.avail >= amount : powernet.avail
 	else
 		return 0
 
@@ -474,7 +481,7 @@ By design, d1 is the smallest direction and d2 is the highest
 // Definitions
 ////////////////////////////////
 
-GLOBAL_LIST_INIT(cable_coil_recipes, list (new/datum/stack_recipe("cable restraints", /obj/item/restraints/handcuffs/cable, 15)))
+GLOBAL_LIST_INIT(cable_coil_recipes, list (new/datum/stack_recipe("cable restraints", /obj/item/restraints/handcuffs/cable, 15), new/datum/stack_recipe("noose", /obj/structure/chair/noose, 30, time = 80, one_per_turf = 1, on_floor = 1)))
 
 /obj/item/stack/cable_coil
 	name = "cable coil"
@@ -494,13 +501,13 @@ GLOBAL_LIST_INIT(cable_coil_recipes, list (new/datum/stack_recipe("cable restrai
 	w_class = WEIGHT_CLASS_SMALL
 	throw_speed = 3
 	throw_range = 5
-	materials = list(MAT_METAL=10, MAT_GLASS=5)
+	materials = list(/datum/material/iron=10, /datum/material/glass=5)
 	flags_1 = CONDUCT_1
 	slot_flags = ITEM_SLOT_BELT
 	attack_verb = list("whipped", "lashed", "disciplined", "flogged")
 	singular_name = "cable piece"
 	full_w_class = WEIGHT_CLASS_SMALL
-	grind_results = list("copper" = 2) //2 copper per cable in the coil
+	grind_results = list(/datum/reagent/copper = 2) //2 copper per cable in the coil
 	usesound = 'sound/items/deconstruct.ogg'
 
 /obj/item/stack/cable_coil/cyborg
@@ -544,7 +551,7 @@ GLOBAL_LIST_INIT(cable_coil_recipes, list (new/datum/stack_recipe("cable restrai
 		return ..()
 
 	var/obj/item/bodypart/affecting = H.get_bodypart(check_zone(user.zone_selected))
-	if(affecting && affecting.status == BODYPART_ROBOTIC)
+	if(affecting?.status == BODYPART_ROBOTIC)
 		if(user == H)
 			user.visible_message("<span class='notice'>[user] starts to fix some of the wires in [H]'s [affecting.name].</span>", "<span class='notice'>You start fixing some of the wires in [H == user ? "your" : "[H]'s"] [affecting.name].</span>")
 			if(!do_mob(user, H, 50))
@@ -595,7 +602,7 @@ GLOBAL_LIST_INIT(cable_coil_recipes, list (new/datum/stack_recipe("cable restrai
 		return
 
 	if(!isturf(T) || T.intact || !T.can_have_cabling())
-		to_chat(user, "<span class='warning'>You can only lay cables on catwalks and plating!</span>")
+		to_chat(user, "<span class='warning'>You can only lay cables on top of exterior catwalks and plating!</span>")
 		return
 
 	if(get_amount() < 1) // Out of cable

@@ -156,7 +156,7 @@
 				radio.attack_self(src)
 
 			if("image") // Set pAI card display face
-				var/newImage = input("Select your new display image.", "Display Image", "Happy") in list("Happy", "Cat", "Extremely Happy", "Face", "Laugh", "Off", "Sad", "Angry", "What")
+				var/newImage = input("Select your new display image.", "Display Image", "Happy") in list("Happy", "Cat", "Extremely Happy", "Face", "Laugh", "Off", "Sad", "Angry", "What", "Sunglasses")
 				var/pID = 1
 
 				switch(newImage)
@@ -180,6 +180,8 @@
 						pID = 9
 					if("Null")
 						pID = 10
+					if("Sunglasses")
+						pID = 11
 				card.setEmotion(pID)
 
 			if("news")
@@ -283,7 +285,7 @@
 
 			if("doorjack")
 				if(href_list["jack"])
-					if(cable && cable.machine)
+					if(cable?.machine)
 						hackdoor = cable.machine
 						hackloop()
 				if(href_list["cancel"])
@@ -322,7 +324,7 @@
 		if(s == "crew manifest")
 			dat += "<a href='byond://?src=[REF(src)];software=manifest;sub=0'>Crew Manifest</a> <br>"
 		if(s == "host scan")
-			dat += "<a href='byond://?src=[REF(src)];software=hostscan;sub=0'>Host Health Scan</a>"
+			dat += "<a href='byond://?src=[REF(src)];software=hostscan;sub=0'>Host Health Scan</a> <br>"
 		if(s == "medical records")
 			dat += "<a href='byond://?src=[REF(src)];software=medicalrecord;sub=0'>Medical Records</a> <br>"
 		if(s == "security records")
@@ -639,7 +641,7 @@
 	[(aiPDA.silent) ? "<font color='red'>\[Off\]</font>" : "<font color='green'>\[On\]</font>"]</a><br><br>"}
 	dat += "<ul>"
 	if(!aiPDA.toff)
-		for (var/obj/item/pda/P in sortNames(get_viewable_pdas()))
+		for (var/obj/item/pda/P in get_viewable_pdas())
 			if (P == aiPDA)
 				continue
 			dat += "<li><a href='byond://?src=[REF(src)];software=pdamessage;target=[REF(P)]'>[P]</a>"

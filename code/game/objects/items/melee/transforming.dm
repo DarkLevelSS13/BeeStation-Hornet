@@ -14,6 +14,12 @@
 	var/w_class_on = WEIGHT_CLASS_BULKY
 	var/clumsy_check = TRUE
 
+/obj/item/melee/transforming/hit_reaction(mob/living/carbon/human/owner, atom/movable/hitby, attack_text, damage, attack_type)
+	if(active)
+		return ..()
+	return 0
+	
+
 /obj/item/melee/transforming/Initialize()
 	. = ..()
 	if(active)
@@ -66,7 +72,7 @@
 		var/datum/component/butchering/BT = LoadComponent(/datum/component/butchering)
 		BT.butchering_enabled = TRUE
 	else
-		GET_COMPONENT(BT, /datum/component/butchering)
+		var/datum/component/butchering/BT = GetComponent(/datum/component/butchering)
 		if(BT)
 			BT.butchering_enabled = FALSE
 	transform_messages(user, supress_message_text)

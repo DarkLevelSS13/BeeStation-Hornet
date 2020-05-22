@@ -38,6 +38,7 @@ GLOBAL_LIST_EMPTY(blob_nodes)
 	var/max_count = 0 //The biggest it got before death
 	var/blobwincount = 400
 	var/victory_in_progress = FALSE
+	var/rerolling = FALSE
 
 /mob/camera/blob/Initialize(mapload, starting_points = 60)
 	validate_location()
@@ -50,7 +51,7 @@ GLOBAL_LIST_EMPTY(blob_nodes)
 	real_name = new_name
 	last_attack = world.time
 	var/datum/blobstrain/BS = pick(GLOB.valid_blobstrains)
-	blobstrain = new BS(src)
+	set_strain(BS)
 	color = blobstrain.complementary_color
 	if(blob_core)
 		blob_core.update_icon()
@@ -69,6 +70,22 @@ GLOBAL_LIST_EMPTY(blob_nodes)
 	if(!T)
 		CRASH("No blobspawnpoints and blob spawned in nullspace.")
 	forceMove(T)
+
+/mob/camera/blob/proc/set_strain(datum/blobstrain/new_strain)
+	if (ispath(new_strain))
+		var/hadstrain = FALSE
+		if (istype(blobstrain))
+			blobstrain.on_lose()
+			qdel(blobstrain)
+			hadstrain = TRUE
+		blobstrain = new new_strain(src)
+		blobstrain.on_gain()
+		if (hadstrain)
+			to_chat(src, "Your strain is now: <b><font color=\"[blobstrain.color]\">[blobstrain.name]</b></font>!")
+			to_chat(src, "The <b><font color=\"[blobstrain.color]\">[blobstrain.name]</b></font> strain [blobstrain.description]")
+			if(blobstrain.effectdesc)
+				to_chat(src, "The <b><font color=\"[blobstrain.color]\">[blobstrain.name]</b></font> strain [blobstrain.effectdesc]")
+
 
 /mob/camera/blob/proc/is_valid_turf(turf/T)
 	var/area/A = get_area(T)
@@ -172,15 +189,15 @@ GLOBAL_LIST_EMPTY(blob_nodes)
 	add_points(0)
 
 /mob/camera/blob/examine(mob/user)
-	..()
+	. = ..()
 	if(blobstrain)
-		to_chat(user, "Its strain is <font color=\"[blobstrain.color]\">[blobstrain.name]</font>.")
+		. += "Its strain is <font color=\"[blobstrain.color]\">[blobstrain.name]</font>."
 
 /mob/camera/blob/update_health_hud()
 	if(blob_core)
 		hud_used.healths.maptext = "<div align='center' valign='middle' style='position:relative; top:0px; left:6px'><font color='#e36600'>[round(blob_core.obj_integrity)]</font></div>"
 		for(var/mob/living/simple_animal/hostile/blob/blobbernaut/B in blob_mobs)
-			if(B.hud_used && B.hud_used.blobpwrdisplay)
+			if(B.hud_used?.blobpwrdisplay)
 				B.hud_used.blobpwrdisplay.maptext = "<div align='center' valign='middle' style='position:relative; top:0px; left:6px'><font color='#82ed00'>[round(blob_core.obj_integrity)]</font></div>"
 
 /mob/camera/blob/proc/add_points(points)
@@ -212,7 +229,7 @@ GLOBAL_LIST_EMPTY(blob_nodes)
 
 	src.log_talk(message, LOG_SAY)
 
-	var/message_a = say_quote(message, get_spans())
+	var/message_a = say_quote(message)
 	var/rendered = "<span class='big'><font color=\"#EE4000\"><b>\[Blob Telepathy\] [name](<font color=\"[blobstrain.color]\">[blobstrain.name]</font>)</b> [message_a]</font></span>"
 
 	for(var/mob/M in GLOB.mob_list)

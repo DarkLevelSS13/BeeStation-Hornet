@@ -15,7 +15,7 @@
 
 /datum/pipeline/Destroy()
 	SSair.networks -= src
-	if(air && air.volume)
+	if(air?.volume)
 		temporarily_store_air()
 	for(var/obj/machinery/atmospherics/pipe/P in members)
 		P.parent = null
@@ -129,7 +129,6 @@
 	var/datum/pipeline/P = returnPipenet(A)
 	if(!P)
 		CRASH("null.addMember() called by [type] on [COORD(src)]")
-		return
 	P.addMember(A, src)
 
 

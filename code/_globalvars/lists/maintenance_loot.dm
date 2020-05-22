@@ -27,7 +27,7 @@
 GLOBAL_LIST_INIT(maintenance_loot, list(
 	/obj/item/bodybag = 1,
 	/obj/item/clothing/glasses/meson = 2,
-	/obj/item/clothing/glasses/sunglasses = 1,
+	/obj/item/clothing/glasses/sunglasses/advanced = 1,
 	/obj/item/clothing/gloves/color/fyellow = 1,
 	/obj/item/clothing/head/hardhat = 1,
 	/obj/item/clothing/head/hardhat/red = 1,
@@ -36,7 +36,7 @@ GLOBAL_LIST_INIT(maintenance_loot, list(
 	/obj/item/clothing/head/welding = 1,
 	/obj/item/clothing/mask/gas = 15,
 	/obj/item/clothing/suit/hazardvest = 1,
-	/obj/item/clothing/under/rank/vice = 1,
+	/obj/item/clothing/under/misc/vice_officer = 1,
 	/obj/item/clothing/suit/hooded/flashsuit = 2,
 	/obj/item/assembly/prox_sensor = 4,
 	/obj/item/assembly/timer = 3,
@@ -54,7 +54,7 @@ GLOBAL_LIST_INIT(maintenance_loot, list(
 	/obj/item/stack/rods/twentyfive = 1,
 	/obj/item/stack/rods/fifty = 1,
 	/obj/item/stack/sheet/cardboard = 2,
-	/obj/item/stack/sheet/metal/twenty = 1,
+	/obj/item/stack/sheet/iron/twenty = 1,
 	/obj/item/stack/sheet/mineral/plasma = 1,
 	/obj/item/stack/sheet/rglass = 1,
 	/obj/item/book/manual/wiki/engineering_construction = 1,
@@ -104,7 +104,7 @@ GLOBAL_LIST_INIT(maintenance_loot, list(
 	/obj/item/storage/secure/briefcase = 3,
 	/obj/item/storage/toolbox/artistic = 2,
 	/obj/item/toy/eightball = 1,
-	/obj/item/reagent_containers/pill/floorpill = 1,
-	/obj/item/reagent_containers/food/snacks/cannedpeaches/maint = 1,
+	/obj/item/reagent_containers/pill/floorpill = 4,
+	/obj/item/reagent_containers/food/snacks/canned/peaches/maint = 1,
 	"" = 3
 	))

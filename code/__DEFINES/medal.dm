@@ -12,6 +12,7 @@
 #define BOSS_MEDAL_LEGION	  "Legion"
 #define BOSS_MEDAL_TENDRIL	  "Tendril"
 #define BOSS_MEDAL_SWARMERS   "Swarmer Beacon"
+#define BOSS_MEDAL_STAR		  "Forgotten Star"
 
 // Score names
 #define HIEROPHANT_SCORE 	 "Hierophants Killed"
@@ -21,6 +22,7 @@
 #define DRAKE_SCORE 	     "Drakes Killed"
 #define LEGION_SCORE 	     "Legion Killed"
 #define SWARMER_BEACON_SCORE "Swarmer Beacons Killed"
+#define STAR_SCORE			 "Forgotten Stars Killed"
 #define TENDRIL_CLEAR_SCORE	 "Tendrils Killed"
 
 //Misc medals
@@ -31,7 +33,7 @@
 #define MEDAL_CLOWNCARKING "Round and Full"
 #define MEDAL_THANKSALOT "The Best Driver"
 
-//[BEGIN BEE EDIT]
+
 #define MEDAL_GHOSTS "G-G-Ghosts?" // die
 #define MEDAL_SINGULARITY_DEATH "Crossing the Horizon" // get eaten by a singularity
 #define MEDAL_GET_CLUWNED "KILLMEKILLMEKILLME" // get turned into a vile creature known as a cluwne
@@ -43,4 +45,4 @@
 #define MEDAL_15_AI_LAW_CHANGES "Dave, my mind is going"
 #define MEDAL_DETONATE_WELDERBOMB "That was stupid of you."
 #define MEDAL_SUCCUMB "Please just end the pain"
-//[END BEE EDIT]
+

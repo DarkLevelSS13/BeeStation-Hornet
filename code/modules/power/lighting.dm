@@ -24,7 +24,7 @@
 	name = "small light fixture frame"
 	icon_state = "bulb-construct-item"
 	result_path = /obj/structure/light_construct/small
-	materials = list(MAT_METAL=MINERAL_MATERIAL_AMOUNT)
+	materials = list(/datum/material/iron=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/wallframe/light_fixture/try_build(turf/on_wall, user)
 	if(!..())
@@ -67,22 +67,21 @@
 	return cell
 
 /obj/structure/light_construct/examine(mob/user)
-	..()
-	switch(src.stage)
+	. = ..()
+	switch(stage)
 		if(1)
-			to_chat(user, "It's an empty frame.")
+			. += "It's an empty frame."
 		if(2)
-			to_chat(user, "It's wired.")
+			. += "It's wired."
 		if(3)
-			to_chat(user, "The casing is closed.")
+			. += "The casing is closed."
 	if(cell_connectors)
 		if(cell)
-			to_chat(user, "You see [cell] inside the casing.")
+			. += "You see [cell] inside the casing."
 		else
-			to_chat(user, "The casing has no power cell for backup power.")
+			. += "The casing has no power cell for backup power."
 	else
-		to_chat(user, "<span class='danger'>This casing doesn't support power cells for backup power.</span>")
-		return
+		. += "<span class='danger'>This casing doesn't support power cells for backup power.</span>"
 
 /obj/structure/light_construct/attack_hand(mob/user)
 	if(cell)
@@ -127,7 +126,7 @@
 				else
 					to_chat(user, "<span class='notice'>You begin deconstructing [src]...</span>")
 					if (W.use_tool(src, user, 30, volume=50))
-						new /obj/item/stack/sheet/metal(drop_location(), sheets_refunded)
+						new /obj/item/stack/sheet/iron(drop_location(), sheets_refunded)
 						user.visible_message("[user.name] deconstructs [src].", \
 							"<span class='notice'>You deconstruct [src].</span>", "<span class='italics'>You hear a ratchet.</span>")
 						playsound(src, 'sound/items/deconstruct.ogg', 75, 1)
@@ -184,7 +183,7 @@
 
 /obj/structure/light_construct/deconstruct(disassembled = TRUE)
 	if(!(flags_1 & NODECONSTRUCT_1))
-		new /obj/item/stack/sheet/metal(loc, sheets_refunded)
+		new /obj/item/stack/sheet/iron(loc, sheets_refunded)
 	qdel(src)
 
 /obj/structure/light_construct/small
@@ -208,13 +207,13 @@
 	use_power = ACTIVE_POWER_USE
 	idle_power_usage = 2
 	active_power_usage = 20
-	power_channel = LIGHT //Lights are calc'd via area so they dont need to be in the machine list
+	power_channel = AREA_USAGE_LIGHT //Lights are calc'd via area so they dont need to be in the machine list
 	var/on = FALSE					// 1 if on, 0 if off
 	var/on_gs = FALSE
 	var/static_power_used = 0
-	var/brightness = 8			// luminosity when on, also used in power calculation
-	var/bulb_power = 1			// basically the alpha of the emitted light source
-	var/bulb_colour = "#FFFFFF"	// befault colour of the light.
+	var/brightness = 11			// luminosity when on, also used in power calculation
+	var/bulb_power = 0.75			// basically the alpha of the emitted light source
+	var/bulb_colour = "#FFF6ED"	// befault colour of the light.
 	var/status = LIGHT_OK		// LIGHT_OK, _EMPTY, _BURNED or _BROKEN
 	var/flickering = FALSE
 	var/light_type = /obj/item/light/tube		// the type of light item
@@ -231,7 +230,7 @@
 	var/nightshift_allowed = TRUE	//Set to FALSE to never let this light get switched to night mode.
 	var/nightshift_brightness = 8
 	var/nightshift_light_power = 0.45
-	var/nightshift_light_color = "#FFDDCC"
+	var/nightshift_light_color = "#FFDBB5" //qwerty's more cozy light
 
 	var/emergency_mode = FALSE	// if true, the light is in emergency mode
 	var/no_emergency = FALSE	// if true, this light cannot ever have an emergency mode
@@ -250,8 +249,10 @@
 	icon_state = "bulb"
 	base_state = "bulb"
 	fitting = "bulb"
-	brightness = 4
+	brightness = 6
+	bulb_colour = "#FFDDBB"
 	desc = "A small lighting fixture."
+	bulb_colour = "#FFE6CC" //little less cozy, bit more industrial, but still cozy.. -qwerty
 	light_type = /obj/item/light/bulb
 
 /obj/machinery/light/small/broken
@@ -274,6 +275,7 @@
 
 /obj/machinery/light/small/built
 	icon_state = "bulb-empty"
+	start_with_cell = FALSE
 
 /obj/machinery/light/small/built/Initialize()
 	. = ..()
@@ -296,11 +298,11 @@
 	spawn(2)
 		switch(fitting)
 			if("tube")
-				brightness = 8
+				brightness = 11
 				if(prob(2))
 					break_light_tube(1)
 			if("bulb")
-				brightness = 4
+				brightness = 6
 				if(prob(5))
 					break_light_tube(1)
 		spawn(1)
@@ -346,7 +348,7 @@
 		var/PO = bulb_power
 		var/CO = bulb_colour
 		var/area/A = get_area(src)
-		if (A && A.fire)
+		if (A?.fire)
 			CO = bulb_emergency_colour
 		else if (nightshift_enabled)
 			BR = nightshift_brightness
@@ -373,16 +375,20 @@
 		set_light(0)
 	update_icon()
 
-	active_power_usage = (brightness * 10)
+	active_power_usage = (brightness * 7.2)
 	if(on != on_gs)
 		on_gs = on
 		if(on)
 			static_power_used = brightness * 20 //20W per unit luminosity
-			addStaticPower(static_power_used, STATIC_LIGHT)
+			addStaticPower(static_power_used, AREA_USAGE_STATIC_LIGHT)
 		else
-			removeStaticPower(static_power_used, STATIC_LIGHT)
+			removeStaticPower(static_power_used, AREA_USAGE_STATIC_LIGHT)
 
 	broken_sparks(start_only=TRUE)
+
+/obj/machinery/light/update_atom_colour()
+	..()
+	update()
 
 /obj/machinery/light/proc/broken_sparks(start_only=FALSE)
 	if(status == LIGHT_BROKEN && has_power())
@@ -419,18 +425,18 @@
 
 // examine verb
 /obj/machinery/light/examine(mob/user)
-	..()
+	. = ..()
 	switch(status)
 		if(LIGHT_OK)
-			to_chat(user, "It is turned [on? "on" : "off"].")
+			. += "It is turned [on? "on" : "off"]."
 		if(LIGHT_EMPTY)
-			to_chat(user, "The [fitting] has been removed.")
+			. += "The [fitting] has been removed."
 		if(LIGHT_BURNED)
-			to_chat(user, "The [fitting] is burnt out.")
+			. += "The [fitting] is burnt out."
 		if(LIGHT_BROKEN)
-			to_chat(user, "The [fitting] has been smashed.")
+			. += "The [fitting] has been smashed."
 	if(cell)
-		to_chat(user, "Its backup power charge meter reads [round((cell.charge / cell.maxcharge) * 100, 0.1)]%.")
+		. += "Its backup power charge meter reads [round((cell.charge / cell.maxcharge) * 100, 0.1)]%."
 
 
 
@@ -629,10 +635,13 @@
 			var/datum/species/ethereal/eth_species = H.dna?.species
 			if(istype(eth_species))
 				to_chat(H, "<span class='notice'>You start channeling some power through the [fitting] into your body.</span>")
-				if(do_after(user, 50, target = src))
-					to_chat(H, "<span class='notice'>You receive some charge from the [fitting].</span>")
-					eth_species.adjust_charge(5)
-					return
+				while(do_after(user, 20, target = src))
+					if(eth_species.ethereal_charge >= ETHEREAL_CHARGE_FULL)
+						to_chat(H, "<span class='notice'>You are now fully charged.</span>")
+						break
+					else
+						to_chat(H, "<span class='notice'>You receive some charge from the [fitting].</span>")
+						eth_species.adjust_charge(5)
 				return
 
 			if(H.gloves)
@@ -753,8 +762,8 @@
 	var/status = LIGHT_OK		// LIGHT_OK, LIGHT_BURNED or LIGHT_BROKEN
 	var/base_state
 	var/switchcount = 0	// number of times switched
-	materials = list(MAT_GLASS=100)
-	grind_results = list("silicon" = 5, "nitrogen" = 10) //Nitrogen is used as a cheaper alternative to argon in incandescent lighbulbs
+	materials = list(/datum/material/glass=100)
+	grind_results = list(/datum/reagent/silicon = 5, /datum/reagent/nitrogen = 10) //Nitrogen is used as a cheaper alternative to argon in incandescent lighbulbs
 	var/rigged = FALSE		// true if rigged to explode
 	var/brightness = 2 //how much light it gives off
 
@@ -773,7 +782,7 @@
 	icon_state = "ltube"
 	base_state = "ltube"
 	item_state = "c_tube"
-	brightness = 8
+	brightness = 11
 
 /obj/item/light/tube/broken
 	status = LIGHT_BROKEN
@@ -786,7 +795,7 @@
 	item_state = "contvapour"
 	lefthand_file = 'icons/mob/inhands/equipment/medical_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/equipment/medical_righthand.dmi'
-	brightness = 4
+	brightness = 6
 
 /obj/item/light/bulb/broken
 	status = LIGHT_BROKEN
@@ -836,7 +845,7 @@
 
 		to_chat(user, "<span class='notice'>You inject the solution into \the [src].</span>")
 
-		if(S.reagents.has_reagent("plasma", 5))
+		if(S.reagents.has_reagent(/datum/reagent/toxin/plasma, 5))
 
 			rigged = TRUE
 
@@ -869,7 +878,7 @@
 	icon = 'icons/obj/lighting.dmi'
 	base_state = "floor"		// base description and icon_state
 	icon_state = "floor"
-	brightness = 4
+	brightness = 6
 	layer = 2.5
 	light_type = /obj/item/light/bulb
 	fitting = "bulb"

@@ -15,6 +15,7 @@
 		)) - typecacheof(list(
 		/obj/effect/dummy/chameleon,
 		/obj/effect/wisp,
+		/obj/effect/mob_spawn,
 		))
 	if(delete_atoms[teleatom.type])
 		qdel(teleatom)
@@ -24,7 +25,6 @@
 	// if the precision is not specified, default to 0, but apply BoH penalties
 	if (isnull(precision))
 		precision = 0
-
 	switch(channel)
 		if(TELEPORT_CHANNEL_BLUESPACE)
 			if(istype(teleatom, /obj/item/storage/backpack/holding))
@@ -73,6 +73,8 @@
 	if(ismob(teleatom))
 		var/mob/M = teleatom
 		M.cancel_camera()
+
+	teleatom.teleport_act()
 
 	return TRUE
 

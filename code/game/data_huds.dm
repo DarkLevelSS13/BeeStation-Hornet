@@ -52,10 +52,10 @@
 /datum/atom_hud/data/diagnostic
 
 /datum/atom_hud/data/diagnostic/basic
-	hud_icons = list(DIAG_HUD, DIAG_STAT_HUD, DIAG_BATT_HUD, DIAG_MECH_HUD, DIAG_BOT_HUD, DIAG_CIRCUIT_HUD, DIAG_TRACK_HUD, DIAG_AIRLOCK_HUD, DIAG_NANITE_FULL_HUD)
+	hud_icons = list(DIAG_HUD, DIAG_STAT_HUD, DIAG_BATT_HUD, DIAG_MECH_HUD, DIAG_BOT_HUD, DIAG_CIRCUIT_HUD, DIAG_TRACK_HUD, DIAG_AIRLOCK_HUD, DIAG_NANITE_FULL_HUD, DIAG_LAUNCHPAD_HUD)
 
 /datum/atom_hud/data/diagnostic/advanced
-	hud_icons = list(DIAG_HUD, DIAG_STAT_HUD, DIAG_BATT_HUD, DIAG_MECH_HUD, DIAG_BOT_HUD, DIAG_CIRCUIT_HUD, DIAG_TRACK_HUD, DIAG_AIRLOCK_HUD, DIAG_NANITE_FULL_HUD, DIAG_PATH_HUD)
+	hud_icons = list(DIAG_HUD, DIAG_STAT_HUD, DIAG_BATT_HUD, DIAG_MECH_HUD, DIAG_BOT_HUD, DIAG_CIRCUIT_HUD, DIAG_TRACK_HUD, DIAG_AIRLOCK_HUD, DIAG_NANITE_FULL_HUD, DIAG_LAUNCHPAD_HUD, DIAG_PATH_HUD)
 
 /datum/atom_hud/data/bot_path
 	hud_icons = list(DIAG_PATH_HUD)
@@ -149,7 +149,6 @@
 			return "health-85"
 		else
 			return "health-100"
-	return "0"
 
 //HOOKS
 
@@ -195,6 +194,8 @@
 		holder.icon_state = "huddead"
 	else
 		switch(virus_threat)
+			if(DISEASE_SEVERITY_PANDEMIC)
+				holder.icon_state = "hudill6"
 			if(DISEASE_SEVERITY_BIOHAZARD)
 				holder.icon_state = "hudill5"
 			if(DISEASE_SEVERITY_DANGEROUS)
@@ -209,6 +210,8 @@
 				holder.icon_state = "hudill0"
 			if(DISEASE_SEVERITY_POSITIVE)
 				holder.icon_state = "hudbuff"
+			if(DISEASE_SEVERITY_BENEFICIAL)
+				holder.icon_state = "hudbuff2"
 			if(null)
 				holder.icon_state = "hudhealthy"
 
@@ -302,7 +305,6 @@
 			return "crit"
 		else
 			return "dead"
-	return "dead"
 
 //Sillycone hooks
 /mob/living/silicon/proc/diag_hud_set_health()
@@ -452,3 +454,53 @@
 		holder.icon_state = "electrified"
 	else
 		holder.icon_state = ""
+
+/*~~~~~~~~~~~~
+	Circutry!
+~~~~~~~~~~~~~*/
+/obj/item/electronic_assembly/proc/diag_hud_set_circuithealth(hide = FALSE)
+	var/image/holder = hud_list[DIAG_CIRCUIT_HUD]
+	var/icon/I = icon(icon, icon_state, dir)
+	holder.pixel_y = I.Height() - world.icon_size
+	if((!isturf(loc))||hide) //if not on the ground dont show overlay
+		holder.icon_state = null
+	else
+		holder.icon_state = "huddiag[RoundDiagBar(obj_integrity/max_integrity)]"
+
+/obj/item/electronic_assembly/proc/diag_hud_set_circuitcell(hide = FALSE)
+	var/image/holder = hud_list[DIAG_BATT_HUD]
+	var/icon/I = icon(icon, icon_state, dir)
+	holder.pixel_y = I.Height() - world.icon_size
+	if((!isturf(loc))||hide) //if not on the ground dont show overlay
+		holder.icon_state = null
+	else if(battery)
+		var/chargelvl = battery.charge/battery.maxcharge
+		holder.icon_state = "hudbatt[RoundDiagBar(chargelvl)]"
+	else
+		holder.icon_state = "hudnobatt"
+
+/obj/item/electronic_assembly/proc/diag_hud_set_circuitstat(hide = FALSE) //On, On and dangerous, or Off
+	var/image/holder = hud_list[DIAG_STAT_HUD]
+	var/icon/I = icon(icon, icon_state, dir)
+	holder.pixel_y = I.Height() - world.icon_size
+	if((!isturf(loc))||hide) //if not on the ground don't show overlay
+		holder.icon_state = null
+	else if(!battery)
+		holder.icon_state = "hudoffline"
+	else if(battery.charge == 0)
+		holder.icon_state = "hudoffline"
+	else if(combat_circuits) //has a circuit that can harm people
+		holder.icon_state = prefered_hud_icon + "-red"
+	else //Bot is on and not dangerous
+		holder.icon_state = prefered_hud_icon
+
+/obj/item/electronic_assembly/proc/diag_hud_set_circuittracking(hide = FALSE)
+	var/image/holder = hud_list[DIAG_TRACK_HUD]
+	var/icon/I = icon(icon, icon_state, dir)
+	holder.pixel_y = I.Height() - world.icon_size
+	if((!isturf(loc))||hide) //if not on the ground dont show overlay
+		holder.icon_state = null
+	else if(long_range_circuits)
+		holder.icon_state = "hudtracking"
+	else
+		holder.icon_state = null

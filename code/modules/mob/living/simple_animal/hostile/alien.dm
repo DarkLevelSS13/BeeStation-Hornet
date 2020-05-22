@@ -35,6 +35,7 @@
 	gold_core_spawnable = NO_SPAWN
 	deathsound = 'sound/voice/hiss6.ogg'
 	deathmessage = "lets out a waning guttural screech, green blood bubbling from its maw..."
+	mobsay_color = "#9EE08F"
 
 	do_footstep = TRUE
 
@@ -168,7 +169,7 @@
 
 /mob/living/simple_animal/hostile/alien/maid/Initialize(mapload)
 	. = ..()
-	AddComponent(/datum/component/cleaning)
+	AddElement(/datum/element/cleaning)
 
 /mob/living/simple_animal/hostile/alien/maid/AttackingTarget()
 	if(ismovableatom(target))

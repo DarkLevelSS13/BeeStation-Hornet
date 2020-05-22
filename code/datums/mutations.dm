@@ -65,12 +65,10 @@
 		return TRUE
 	for(var/M in H.dna.mutations)//check for conflicting powers
 		var/datum/mutation/human/mewtayshun = M
-		if(LAZYLEN(mewtayshun.conflicts))
-			for(var/cons in mewtayshun.conflicts)
-				var/datum/mutation/human/conflicter = cons
-				if(conflicter == type)
-					to_chat(H, "<span class='warning'>You feel your genes resisting something.</span>")
-					return TRUE
+		if(!(mewtayshun.type in conflicts) && !(type in mewtayshun.conflicts))
+			continue
+		to_chat(H, "<span class='warning'>You feel your genes resisting something.</span>")
+		return TRUE
 	owner = H
 	dna = H.dna
 	dna.mutations += src
@@ -120,13 +118,6 @@
 			qdel(src)
 		return 0
 	return 1
-
-/datum/mutation/human/proc/say_mod(message)
-	if(message)
-		return message
-
-/datum/mutation/human/proc/get_spans()
-	return list()
 
 /mob/living/carbon/proc/update_mutations_overlay()
 	return

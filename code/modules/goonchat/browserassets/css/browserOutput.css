@@ -17,7 +17,7 @@ body {
     line-height: 1.2;
 	overflow-x: hidden;
 	overflow-y: scroll;
-	word-wrap: break-word;		
+	word-wrap: break-word;
 	scrollbar-face-color:#1A1A1A;
 	scrollbar-track-color:#171717;
 	scrollbar-highlight-color:#171717;
@@ -104,7 +104,7 @@ a.popt {text-decoration: none;}
 #ping {
 	position: fixed;
 	top: 0;
-	right: 115px;
+	right: 135px;
 	width: 45px;
 	background: #202020;
 	height: 30px;
@@ -134,13 +134,13 @@ a.popt {text-decoration: none;}
 }
 #userBar .subCell:hover {background: #202020;}
 #userBar .toggle {
-	width: 40px;
+	width: 45px;
     background: #202020;
     border-top: 0;
     float: right;
     text-align: center;
 }
-#userBar .sub {clear: both; display: none; width: 160px;}
+#userBar .sub {clear: both; display: none; width: 180px;}
 #userBar .sub.scroll {overflow-y: scroll;}
 #userBar .sub.subCell {padding: 3px 0 3px 8px; line-height: 30px; font-size: 0.9em; clear: both;}
 #userBar .sub span {
@@ -250,7 +250,7 @@ a.popt {text-decoration: none;}
 .motd a, .motd a:link, .motd a:visited, .motd a:active, .motd a:hover {color: #a4bad6;}
 
 /* ADD HERE FOR BOLD */
-.bold, .name, .prefix, .ooc, .looc, .adminooc, .admin, .medal, .yell {font-weight: bold;}
+.bold, .name, .prefix, .ooc, .dooc, .looc, .adminooc, .admin, .medal, .yell {font-weight: bold;}
 
 /* ADD HERE FOR ITALIC */
 .italic, .italics,  .emote {font-style: italic;}
@@ -264,6 +264,7 @@ h1.alert, h2.alert		{color: #a4bad6;}
 em						{font-style: normal;	font-weight: bold;}
 
 .ooc					{color: #cca300;	font-weight: bold;}
+.dooc					{color: #d543e9;	font-weight: bold;}
 .looc 					{color: #ffde5c;	font-weight: bold;}
 .adminobserverooc		{color: #0099cc;	font-weight: bold;}
 .adminooc				{color: #3d5bc3;	font-weight: bold;}
@@ -286,10 +287,10 @@ em						{font-style: normal;	font-weight: bold;}
 .sciradio				{color: #c68cfa;}
 .comradio				{color: #5177ff;}
 .secradio				{color: #dd3535;}
-.medradio				{color: #57b8f0;}
+.medradio				{color: #33ccff;}
 .engradio				{color: #f37746;}
 .suppradio				{color: #b88646;}
-.servradio				{color: #6ca729;}
+.servradio				{color: #4e7a1f}
 .syndradio				{color: #8f4a4b;}
 .centcomradio			{color: #2681a5;}
 .aiprivradio			{color: #d65d95;}
@@ -303,6 +304,8 @@ em						{font-style: normal;	font-weight: bold;}
 .emote					{					font-style: italic;}
 .selecteddna			{color: #ffffff; 	background-color: #001B1B}
 
+.examine				{font-size: 8pt;}
+
 .attack					{color: #e01c1c;}
 .disarm					{color: #b42525;}
 .passive				{color: #a00f0f;}
@@ -310,6 +313,7 @@ em						{font-style: normal;	font-weight: bold;}
 .userdanger				{color: #c51e1e;	font-weight: bold; font-size: 24px;}
 .danger					{color: #c51e1e;}
 .warning				{color: #c51e1e;	font-style: italic;}
+.alertwarning           {color: #FF0000;    font-weight: bold}
 .boldwarning			{color: #c51e1e;	font-style: italic;	font-weight: bold}
 .announce 				{color: #c51e1e;	font-weight: bold;}
 .boldannounce			{color: #c51e1e;	font-weight: bold;}
@@ -323,6 +327,8 @@ em						{font-style: normal;	font-weight: bold;}
 .unconscious			{color: #a4bad6;	font-weight: bold;}
 .suicide				{color: #ff5050;	font-style: italic;}
 .green					{color: #059223;}
+.red                    {color: #FF0000}
+.blue                   {color: #215cff}
 .nicegreen				{color: #059223;}
 .shadowling				{color: #8e8a99;}
 .cult					{color: #aa1c1c;}
@@ -383,6 +389,7 @@ em						{font-style: normal;	font-weight: bold;}
 .alertalien				{color: #059223;	font-weight: bold;}
 .changeling				{color: #059223;	font-style: italic;}
 .assimilator			{color: #059223;	font-size: 16px ; font-weight: bold;}
+.alertsyndie			{color: #FF0000;	font-size: 24px ; font-weight: bold;}
 
 .spider					{color: #8800ff;}
 
@@ -400,6 +407,7 @@ em						{font-style: normal;	font-weight: bold;}
 .greentext				{color: #059223;	font-size: 24px;}
 .redtext				{color: #c51e1e;	font-size: 24px;}
 .clown					{color: #ff70c1;	font-size: 24px; font-family: "Comic Sans MS", cursive, sans-serif; font-weight: bold;}
+.singing				{font-family: "Trebuchet MS", cursive, sans-serif; font-style: italic;}
 .his_grace				{color: #15D512;	font-family: "Courier New", cursive, sans-serif; font-style: italic;}
 .hypnophrase			{color: #202020;	font-weight: bold; animation: hypnocolor 1500ms infinite;}
 @keyframes hypnocolor {
